@@ -108,7 +108,15 @@ Si une checklist échoue, **reprendre le passage incriminé avant d'écrire le f
 - Génération de plans, briefs, JSON, JSON-LD : technique, pas concerné.
 - Documentation du playbook (README, docs/, playbooks/) : technique, pas concerné.
 
-Ces règles concernent **uniquement le contenu rédigé pour publication** : `article.md` produit par `/mentionable-article`, ou toute autre rédaction longue destinée à un site web.
+Ces règles concernent **le contenu rédigé pour publication ou pour contact one-to-one identifiable** :
+- `article.md` produit par `/mentionable-article`, ou toute autre rédaction longue destinée à un site web ;
+- emails de prospection et DMs LinkedIn produits par `/mentionable-outreach` (un destinataire humain qui détecte les patterns IA aussi vite qu'un lecteur d'article, voire plus vite parce qu'il reçoit des dizaines de cold emails par semaine).
+
+Pour les emails et DMs, en plus des règles ci-dessus, contraintes additionnelles :
+- Pas d'ouverture type « J'espère que ce message vous trouve bien » / « I hope this email finds you well ».
+- Pas de signature marketing surchargée (4 lignes + emojis + tagline). Signature humaine : prénom + lien éventuel.
+- Longueur stricte : email 200-300 mots max, DM LinkedIn 60-90 mots.
+- Pour l'anglais : bannir aussi `delve into`, `dive into`, `navigate` (figuré), `crucial`, `essential`, `unlock`, `unleash`, `landscape`, `realm`, `tapestry`, `it's worth noting`, `furthermore`, `moreover`, `that said`, `in today's fast-paced world`.
 
 ---
 

@@ -45,6 +45,8 @@ Bénéfices : skip de la sélection projet, réutilisation des fan-outs déjà c
 
 Stocke `projectId`, `projectName` et calcule `projectSlug` (kebab-case du nom, sans accents, max 60 char) — réutilisés en étapes 2, 4, 5, 6.
 
+**Contexte produit (si disponible)** : avec `Read`, vérifie si `projects/<projectSlug>/value-proposition.md` existe. S'il existe, lis-le (`productContext` = problème résolu, USP, ICP / personas, cas d'usage, concurrents nommés). Tu t'en serviras à l'étape de synthèse du `plan.md` pour : (1) vérifier que le pilier sert bien l'ICP, (2) **prioriser les satellites alignés sur les cas d'usage et personas du produit**, (3) signaler les satellites SERP-only hors ICP comme « trafic mais faible intention d'achat ». S'il n'existe pas, continue sans (priorisation par signal SERP × LLM seul).
+
 Tu peux aussi conseiller `/mentionable-clusters` à l'utilisateur en amont s'il n'a pas encore exploré les fan-outs du projet : c'est la commande dédiée pour transformer le signal LLM brut en seeds prêts à passer ici.
 
 ## Étape 2 — Pipeline DataForSEO

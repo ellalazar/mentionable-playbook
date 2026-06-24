@@ -9,7 +9,9 @@ Argument fourni : `$ARGUMENTS` (filtre thématique optionnel, ex : "comparatif",
 
 ## Étape 1 — Identifier le projet
 
-`list_projects()` → `projectId`. Si plusieurs projets, demande lequel.
+`list_projects()` → `projectId`, `projectName`. Si plusieurs projets, demande lequel. Calcule `projectSlug` (kebab-case du nom, sans accents).
+
+**Contexte produit (si disponible)** : avec `Read`, vérifie si `projects/<projectSlug>/value-proposition.md` existe. S'il existe, lis-le (`productContext` = problème résolu, USP, ICP / personas, concurrents nommés). Il sert à pondérer la pertinence produit dans le scoring (étape 5). S'il n'existe pas, continue sans (le facteur produit vaut alors 1 partout).
 
 ## Étape 2 — Collecter les fan-outs
 
@@ -38,10 +40,13 @@ Pour chaque fan-out, classe l'intention :
 
 ## Étape 5 — Calculer un score de priorité
 
-Score simple : **fréquence × multiplicateur intent × multiplicateur couverture**
+Score : **fréquence × multiplicateur intent × multiplicateur couverture × multiplicateur fit produit**
 
 - Multiplicateur intent : Comparatif × 1.5, Transactionnel × 1.3, Reviews × 1.2, Informationnel × 1
 - Multiplicateur couverture : Non couvert × 1.5, Partiellement × 1, Couvert × 0.3 (= à exclure)
+- Multiplicateur fit produit (uniquement si `productContext` chargé, sinon 1 partout) : sujet au cœur de la valeur / langage de l'ICP × 1.4, sujet adjacent × 1, sujet périphérique (hors ICP, hors cas d'usage) × 0.6. Juge le fit à partir du problème résolu, des personas et des cas d'usage du `value-proposition.md`.
+
+Ajoute une colonne **Fit produit** au tableau du backlog (Fort / Moyen / Faible) quand `productContext` est chargé, pour rendre le facteur lisible.
 
 ## Étape 6 — Produire le backlog
 

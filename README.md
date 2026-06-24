@@ -159,14 +159,20 @@ Ce repo n'est pas juste un set de prompts. Il intègre 4 mécanismes qui rendent
 
 Tous les livrables sont scopés par projet Mentionable sous `projects/<projet-slug>/` (slug dérivé du nom récupéré via le MCP). Un fichier `.project.json` au niveau projet stocke `projectId` + `projectName` pour que les commandes downstream retrouvent le projet sans re-demander.
 
+Un fichier **`value-proposition.md`** (optionnel mais recommandé) au niveau projet sert de **source de vérité produit** : one-liner, problème résolu, USP / différenciateurs, ICP / personas, concurrents nommés, bénéfices, périmètre honnête. Quand il est présent, les commandes de contenu le lisent pour contextualiser leur sortie : `/mentionable-article` (cadrage ICP, mention produit + CTA, cohérence terminologique), `/mentionable-brief` (angles différenciants, signal GEO), `/mentionable-pillar` (priorisation des satellites par fit ICP), `/mentionable-content-gap` (multiplicateur de fit produit au scoring) et `/mentionable-outreach` (description produit + USP des messages). S'il est absent, chaque commande continue normalement et le signale.
+
 ```
 projects/
 └── mon-client/
     ├── .project.json
+    ├── value-proposition.md  ← source de vérité produit (optionnel, lu par les commandes de contenu)
+    ├── editorial-calendar.json ← planning daté (publishDate → frontmatter date:), généré par scripts/editorial-calendar.mjs
+    ├── editorial-calendar.md   ← calendrier lisible
     ├── discovery/
     │   └── 2026-05-11/
     │       ├── clusters.json     ← seeds prêts, machine-readable
     │       ├── clusters.md       ← rapport human-readable
+    │       ├── coverage-gap.md   ← thèmes non couverts = backlog futur
     │       └── fan-outs-raw.json ← audit trail
     ├── pillars/
     │   └── communication-non-violente/

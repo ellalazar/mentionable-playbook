@@ -62,7 +62,44 @@ Si `projects/<projectSlug>/.project.json` n'existe pas, crée-le avec `Write` :
 
 `articleSlug` = kebab-case du H1 final (max 60 char, sans accents).
 
-Stocke pour la suite : `subject`, `briefContent`, `projectId`, `projectName`, `projectSlug`, `articleSlug`.
+### Étape 1ter — Contexte produit (source de vérité, si disponible)
+
+Une fois `projectSlug` connu, vérifie avec `Read` si `projects/<projectSlug>/value-proposition.md` existe.
+
+- **S'il existe** : lis-le intégralement. C'est la **source de vérité produit** du projet. Garde en tête `productContext` = { one-liner, problème résolu, USP / différenciateurs, ICP / personas, concurrents nommés, bénéfices, périmètre honnête }. Tu t'en serviras à l'étape 5 pour contextualiser l'article.
+- **S'il n'existe pas** : continue sans (le contexte produit est optionnel, ne bloque pas). Signale juste dans le résumé final qu'aucun `value-proposition.md` n'a été trouvé et que l'article gagnerait à en avoir un.
+
+Stocke pour la suite : `subject`, `briefContent`, `projectId`, `projectName`, `projectSlug`, `articleSlug`, `productContext`.
+
+## Étape 1quater — Langue, calendrier de publication & maillage interne
+
+### Langue (projet potentiellement bilingue)
+- Si l'argument contient `--lang fr` ou `--lang en` → produis **cette langue uniquement**.
+- Sinon, si `projects/<projectSlug>/editorial-calendar.json` existe avec `bilingual: true` → produis **les deux langues** : un passage FR complet, puis un passage EN complet du même sujet.
+- Sinon → FR par défaut.
+
+**Slug canonique = dossier.** Le `topicSlug` (slug EN) sert de dossier interne (clé stable du calendrier et du relink). Il n'affecte pas les URLs publiées, qui restent localisées par langue (FR → `slugFr`, EN → `slugEn`). Chaque langue vit dans un sous-dossier :
+`projects/<projectSlug>/articles/<topicSlug>/<lang>/` (avec `<lang>` = `fr` ou `en`).
+Le slug d'URL réel de chaque langue (`slugFr` / `slugEn`) va dans le frontmatter `slug:`, **pas** dans le nom de dossier. **Tous les fichiers de l'étape 5-7** (`article.md`, `jsonld.json`, `sources.json`, `meta.json`) vivent dans ce sous-dossier de langue.
+
+### Date de publication (depuis le calendrier — ne pas mettre la date du jour)
+Lis `projects/<projectSlug>/editorial-calendar.json` s'il existe. Trouve l'entrée dont `topicSlug` correspond au sujet.
+- Utilise sa `publishDate` pour le frontmatter `date:` **et** pour `datePublished` du JSON-LD. C'est la date de mise en ligne programmée, pas aujourd'hui.
+- Récupère aussi `cluster`, `slugFr`, `slugEn`, `titleFr`, `titleEn` de l'entrée. La version dans l'autre langue (même `topicSlug`, même `publishDate`) est l'**alternate hreflang**.
+- Si le sujet n'est pas dans le calendrier → `date:` = aujourd'hui, et signale-le dans le résumé.
+
+### Maillage interne avec dates échelonnées (règle stricte)
+Un article ne lie QUE des URLs déjà en ligne à sa propre date, sinon le lien tombe en 404 jusqu'à la mise en ligne de la cible.
+- **Candidat liable ⟺ même `cluster` ET `publishDate ≤ publishDate` de l'article courant** (lis ces dates dans `editorial-calendar.json`).
+- Le pilier du cluster est publié avant ses satellites : un satellite peut toujours lier vers son pilier.
+- Les articles du même cluster à `publishDate >` celle de l'article courant **ne sont pas liés** ici. Ils seront rattachés plus tard par le passage relink.
+- La paire de langue (FR↔EN) sort le même jour : son lien `alternate` est toujours valide.
+- Les liens internes du corps + de « Pour aller plus loin » sont entourés des marqueurs `<!-- maillage:start -->` … `<!-- maillage:end -->` pour que le relink puisse les régénérer.
+
+### Après écriture (les deux langues produites)
+1. Backfill du maillage descendant/latéral sur les articles déjà en ligne du cluster :
+   `node scripts/relink-cluster.mjs --project-slug <projectSlug> --cluster <clusterId> --as-of <publishDate>`
+2. Passe le `status` du sujet à `done` dans `editorial-calendar.json` (édite le champ `status` de l'entrée `topicSlug`).
 
 ## Étape 2 — Auteur & Organisation (pour JSON-LD)
 
@@ -117,17 +154,22 @@ Construis mentalement la table : H1 · TL;DR · H2 #1 (X mots) · H2 #2 (X mots)
 
 ## Étape 5 — Rédaction one-shot
 
-Crée `projects/<projectSlug>/articles/<articleSlug>/article.md`. Structure obligatoire :
+Crée `projects/<projectSlug>/articles/<topicSlug>/<lang>/article.md` (un fichier par langue). Structure obligatoire :
 
 ```markdown
 ---
-title: "<H1>"
-description: "<méta-description 150-160 caractères>"
-slug: "<slug>"
-date: "<YYYY-MM-DD>"
+title: "<H1 dans la langue cible>"
+description: "<méta-description 150-160 caractères, langue cible>"
+slug: "<slugFr ou slugEn selon la langue>"
+lang: "<fr | en>"
+date: "<publishDate du calendrier — PAS aujourd'hui>"
 author: "<nom>"
 keywords: ["<kw1>", "<kw2>", ...]
 wordCount: <int>
+alternates:
+  fr: "/<slugFr>"   # URL de la version FR (pour hreflang)
+  en: "/<slugEn>"   # URL de la version EN (pour hreflang)
+  x-default: "/<slug du marché de lancement>"   # hreflang x-default = version servie quand langue indéterminée. Pour exolead : FR (le site sort en FR d'abord).
 ---
 
 # <H1>
@@ -174,9 +216,11 @@ wordCount: <int>
 
 ## Pour aller plus loin
 
-<Si l'article est un satellite d'un pilier : lien vers le pilier avec ancre descriptive.
-Si l'article est le pilier : 3-5 liens vers les satellites du même cluster.
-2-3 ressources externes complémentaires (livres, études).>
+<Entoure les liens internes des marqueurs `<!-- maillage:start -->` et `<!-- maillage:end -->`.
+Règle maillage (cf. étape 1quater) : ne lie QUE les articles du même cluster dont `publishDate ≤` celle de l'article courant (déjà en ligne). Pilier d'abord s'il est live, puis satellites frères live, avec ancres descriptives. Les articles plus récents seront rattachés par le relink.
+Si AUCUN article du cluster n'est encore live (cas du tout premier article) : pas de lien interne, bloc maillage vide.
+Hors maillage : 2-3 ressources externes complémentaires (livres, études).
+Si `productContext` est chargé : 1 lien vers le produit / une page pertinente, ancre descriptive honnête (cf. « Contextualisation produit »).>
 
 ---
 
@@ -192,6 +236,17 @@ Si l'article est le pilier : 3-5 liens vers les satellites du même cluster.
 - **Pas de keyword stuffing** : le mot-clé principal apparaît dans H1, méta-description, intro, 1-2 H2 pertinentes. Reste en variations sémantiques (synonymes, entités liées).
 - **Tone exec, sourcé, posture éditoriale assumée** : pas de marketing, pas de superlatifs vides, pas de "découvrez", "il est temps de", "boostez".
 
+### Contextualisation produit (si `productContext` chargé en étape 1ter)
+
+Quand `productContext` existe, sers-t'en pour rendre l'article **pertinent pour la cible réelle**, sans le transformer en publicité. La neutralité éditoriale Princeton reste prioritaire : un article qui pitche le produit à chaque paragraphe perd en citation rate ET en crédibilité.
+
+- **Cadrer dans le langage de l'ICP** : formule les points de douleur, exemples et scénarios avec le vocabulaire et les enjeux des personas du `productContext` (ex : « un SDR qui passe sa journée à scroller LinkedIn » plutôt qu'un exemple générique).
+- **Cohérence terminologique** : emploie les mêmes termes que le produit pour les concepts clés (ex : « signaux d'intention », « warm outbound » si c'est le lexique maison), pour que l'article et le site parlent la même langue.
+- **Mention contextuelle du produit : 1 fois maximum dans le corps**, et seulement là où c'est réellement justifié (la solution au problème traité). Jamais en force. Le produit peut aussi ne pas être cité du tout si l'angle ne s'y prête pas.
+- **CTA dans « Pour aller plus loin »** : un lien vers le produit / une page pertinente, avec une ancre descriptive honnête, en plus des liens internes pilier/satellite. Pas d'injonction marketing (« essayez gratuitement ! »).
+- **Concurrents** : si `productContext` nomme des concurrents et que l'article est un comparatif, traite-les avec honnêteté (les dénigrer fait fuir le lecteur et casse la citation rate). Appuie-toi sur le différenciateur réel, pas sur le dénigrement.
+- **Périmètre honnête** : ne promets pas une capacité que le produit n'a pas (cf. section « périmètre » du `productContext`).
+
 ### Anti-hallucinations
 
 - **Tu n'inventes JAMAIS** un chiffre, une date, un nom propre ou une citation directe. Toutes ces données viennent de `factsBank` (étape 3) ou des connaissances vérifiables du modèle (Wikipedia, références largement attestées).
@@ -204,6 +259,7 @@ Avant l'appel `Write`, passe le texte intégral à travers la checklist de `CLAU
 
 1. **Em-dashes** : recherche `—` (U+2014) dans tout le texte. Doit retourner zéro. Si présent, remplacer chaque occurrence par virgule / point-virgule / parenthèse / deux phrases.
 2. **Vocabulaire banni** : recherche « plongeons », « naviguer » (sens figuré), « véritable », « véritablement », « littéralement », « absolument » (intensif), « au cœur de », « écosystème » (hors tech), « univers » (figuré), « fascinant », « captivant », « incontournable », « il est essentiel », « il convient », « il est important de noter », « il s'agit de », « en somme », « par ailleurs », « en effet » (début de phrase), « ainsi » (début de phrase), « découvrez », « boostez », « révolutionnaire », « unique en son genre ». Doit retourner zéro hit. Remplacer chaque.
+   - **Si `lang = en`** : applique en plus la liste EN bannie de `CLAUDE.md` : `delve into`, `dive into`, `navigate` (figuré), `crucial`, `essential`, `unlock`, `unleash`, `landscape`, `realm`, `tapestry`, `it's worth noting`, `furthermore`, `moreover`, `that said`, `in today's fast-paced world`. Zéro hit attendu. Les chevrons français `«  »` ne s'appliquent PAS à l'anglais : en EN, utilise les guillemets anglais courbes `"` `"`. Le bannissement des em-dashes reste valable en EN aussi.
 3. **Anaphores triple** (« X. X. X. ») : compter. Maximum 1 par article.
 4. **« Pas X, mais Y »** : compter. Maximum 1 par article.
 5. **Paragraphes ouverts par transition** (Cependant, Toutefois, Par ailleurs, En outre) : compter. Maximum 2 par article.
@@ -214,7 +270,7 @@ Si une vérification échoue : **corriger le passage avant l'écriture**. Ne pas
 
 ## Étape 6 — JSON-LD
 
-Crée `projects/<projectSlug>/articles/<articleSlug>/jsonld.json`. Structure :
+Crée `projects/<projectSlug>/articles/<topicSlug>/<lang>/jsonld.json`. Structure :
 
 ```json
 {
@@ -226,10 +282,10 @@ Crée `projects/<projectSlug>/articles/<articleSlug>/jsonld.json`. Structure :
       "headline": "<H1 — max 110 char>",
       "description": "<méta-description>",
       "image": "<url-image-cover-si-connue-sinon-null>",
-      "datePublished": "<YYYY-MM-DD>",
-      "dateModified": "<YYYY-MM-DD>",
+      "datePublished": "<publishDate du calendrier>",
+      "dateModified": "<publishDate, ou date du dernier relink>",
       "wordCount": <int>,
-      "inLanguage": "fr-FR",
+      "inLanguage": "<fr-FR si lang=fr, en-GB si lang=en>",
       "keywords": ["<kw1>", "<kw2>", ...],
       "author": {
         "@type": "Person",
@@ -282,7 +338,7 @@ Règles :
 
 ## Étape 7 — sources.json & meta.json
 
-Crée `projects/<projectSlug>/articles/<articleSlug>/sources.json` — audit trail des citations utilisées :
+Crée `projects/<projectSlug>/articles/<topicSlug>/<lang>/sources.json` — audit trail des citations utilisées :
 
 ```json
 {
@@ -299,7 +355,7 @@ Crée `projects/<projectSlug>/articles/<articleSlug>/sources.json` — audit tra
 }
 ```
 
-Crée `projects/<projectSlug>/articles/<articleSlug>/meta.json` — métadonnées exploitables (par futur outil de publi) :
+Crée `projects/<projectSlug>/articles/<topicSlug>/<lang>/meta.json` — métadonnées exploitables (par futur outil de publi). Ajoute `lang`, `topicSlug`, `cluster` et `publishDate` aux champs ci-dessous :
 
 ```json
 {
@@ -352,7 +408,7 @@ Prochaine étape : /mentionable-images projects/<projectSlug>/articles/<articleS
 
 ## Règles strictes globales
 
-- **Article en français** (sauf demande explicite contraire), neutre, exec.
+- **Langue** : selon l'étape 1quater. Projet bilingue → produire FR **et** EN (deux passages, deux sous-dossiers `<topicSlug>/{fr,en}/`). Chaque version est rédigée nativement dans sa langue (pas une traduction mot à mot : un EN naturel pour un lecteur UK, un FR naturel), neutre, exec.
 - **Pas d'emoji** dans le corps de l'article. Markdown propre.
 - **Pas de mention "Selon l'étude Princeton…"** dans l'article lui-même : la grille Princeton est ton guide interne, pas le sujet de l'article (sauf si l'article PORTE sur le GEO).
 - **WebFetch en parallèle** quand possible (étape 3).
@@ -367,6 +423,7 @@ Le résumé doit refléter le chemin scopé projet :
 ```
 ✅ Article rédigé : projects/<projectSlug>/articles/<articleSlug>/
    Projet Mentionable : <projectName>
+   Contexte produit : value-proposition.md <utilisé ✓ | absent (recommandé d'en créer un)>
    ...
 Prochaine étape : /mentionable-images projects/<projectSlug>/articles/<articleSlug>/article.md
 ```

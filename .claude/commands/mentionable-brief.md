@@ -11,9 +11,10 @@ Si `$ARGUMENTS` est vide, demande à l'utilisateur le sujet à briefer (idéalem
 
 ## Étape 1 — Identifier le projet et le fan-out
 
-1. `list_projects()` → `projectId`
-2. `list_fan_outs(projectId, filters: { search: "$ARGUMENTS" }, limit: 20)` — retrouve le fan-out exact et ses prompts associés
-3. Note la fréquence, les LLMs concernés, et les `promptIds` parents
+1. `list_projects()` → `projectId`, `projectName`. Calcule `projectSlug` (kebab-case du nom, sans accents).
+2. **Contexte produit (si disponible)** : avec `Read`, vérifie si `projects/<projectSlug>/value-proposition.md` existe. S'il existe, lis-le : c'est la **source de vérité produit** (`productContext` = one-liner, problème, USP / différenciateurs, ICP / personas, concurrents nommés, bénéfices, périmètre). Tu t'en serviras aux sections « Angles différenciants », « Signal GEO » et pour orienter l'intent/format vers l'ICP. S'il n'existe pas, continue sans.
+3. `list_fan_outs(projectId, filters: { search: "$ARGUMENTS" }, limit: 20)` — retrouve le fan-out exact et ses prompts associés
+4. Note la fréquence, les LLMs concernés, et les `promptIds` parents
 
 ## Étape 2 — Cartographier les sources existantes
 
@@ -95,11 +96,13 @@ Comment se démarquer dans les réponses LLM :
 - Format unique (calculator, framework, template téléchargeable)
 - Posture éditoriale (avis tranché, prise de position)
 
+Si `productContext` est chargé : ancre au moins un angle sur un **vrai différenciateur produit** (USP de `value-proposition.md`) et propose un **angle de CTA** cohérent avec le périmètre honnête du produit.
+
 ## 7. Signal GEO
 
 Mots-clés / entités à inclure pour maximiser les chances d'être cité :
-- Entités produit : [marque, concurrents, technologies]
-- Entités contexte : [secteur, géo, taille d'entreprise]
+- Entités produit : [marque, concurrents, technologies] — si `productContext` est chargé, reprends la marque et les concurrents nommés dans `value-proposition.md`
+- Entités contexte : [secteur, géo, taille d'entreprise] — alignées sur l'ICP / les personas du `productContext`
 - Données chiffrées à inclure
 
 ---
