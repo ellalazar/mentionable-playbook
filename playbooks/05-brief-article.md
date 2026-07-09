@@ -1,144 +1,144 @@
-# Playbook 05 — Brief d'article complet
+# Playbook 05 — Full article brief
 
-> Tu as un fan-out à attaquer. Cette commande te sort un **brief prêt à rédiger** : titre, outline H2/H3, FAQ, sources à citer, pages concurrentes à dépasser.
+> You have a fan-out to attack. This command produces a **ready-to-write brief**: title, H2/H3 outline, FAQ, sources to cite, competitor pages to beat.
 
-## Objectif
+## Goal
 
-Transformer un fan-out (issu de `/mentionable-content-gap` ou choisi à la main) en **brief éditorial complet et actionnable**, calibré sur ce que les LLMs consultent réellement pour ce type de requête.
+Turn a fan-out (from `/mentionable-content-gap` or hand-picked) into a **complete, actionable article brief**, calibrated on what the LLMs actually consult for that type of query.
 
-## Pour qui
+## Who it's for
 
-- **Rédacteurs internes ou freelance** qui ont besoin d'un cadre clair
-- **SEO content** qui valide les briefs avant production
-- **Agences** qui veulent industrialiser la production de briefs GEO
+- **In-house or freelance writers** who need a clear framework
+- **SEO content** who validate briefs before production
+- **Agencies** who want to industrialize GEO brief production
 
-## Pré-requis
+## Prerequisites
 
-- MCP Mentionable installé
-- Au moins 1 prompt tracké couvrant le sujet (pour avoir les fan-outs et sources associés)
-- Idéalement : avoir lancé `/mentionable-content-gap` au préalable pour choisir un fan-out à fort score
+- Mentionable MCP installed
+- At least 1 tracked prompt covering the topic (to get the associated fan-outs and sources)
+- Ideally: having run `/mentionable-content-gap` beforehand to pick a high-scoring fan-out
 
-## Tools MCP utilisés
+## MCP tools used
 
 - `list_projects`, `list_fan_outs`
-- `list_llm_sources` (filtré par `promptIds`) — sources d'autorité
-- `list_competitors`, `list_competitor_sources` — pages concurrentes à dépasser
+- `list_llm_sources` (filtered by `promptIds`) — authority sources
+- `list_competitors`, `list_competitor_sources` — competitor pages to beat
 
-## Sur Claude Code
-
-```
-/mentionable-brief "comparatif [catégorie] open source 2026"
-```
+## On Claude Code
 
 ```
-/mentionable-brief "alternative à CompetitorA"
+/mentionable-brief "open source [category] comparison 2026"
 ```
 
-## Sur Cursor / Claude Desktop / autre client
+```
+/mentionable-brief "alternative to CompetitorA"
+```
+
+## On Cursor / Claude Desktop / another client
 
 ```text
-Tu es un stratège contenu GEO. Produis un brief d'article complet pour le sujet : "<SUJET>".
+You are a GEO content strategist. Produce a full article brief for the topic: "<TOPIC>".
 
 1. list_projects() → projectId
-2. list_fan_outs(projectId, filters.search: "<SUJET>", limit: 20) → trouve le fan-out exact, note fréquence, LLMs, promptIds parents
-3. list_llm_sources(projectId, filters.promptIds: [...], limit: 50, sortBy: "appearances_desc") → sources que les LLMs consultent
-4. list_competitors(projectId, filters.status: ["CONFIRMED"], limit: 10, sortBy: "mentions_desc") → top concurrents
-5. Pour le top 3 concurrents : list_competitor_sources(projectId, competitorId, limit: 10) → URLs précises à dépasser
+2. list_fan_outs(projectId, filters.search: "<TOPIC>", limit: 20) → find the exact fan-out, note frequency, LLMs, parent promptIds
+3. list_llm_sources(projectId, filters.promptIds: [...], limit: 50, sortBy: "appearances_desc") → sources the LLMs consult
+4. list_competitors(projectId, filters.status: ["CONFIRMED"], limit: 10, sortBy: "mentions_desc") → top competitors
+5. For the top 3 competitors: list_competitor_sources(projectId, competitorId, limit: 10) → specific URLs to beat
 
-Rends un brief markdown :
-- Méta (titre, slug, méta-desc, intent, format)
-- Outline H2/H3 (6-10 H2)
-- FAQ (5-8 questions issues des fan-outs proches)
-- Sources à citer (4-6 domaines d'autorité)
-- Sources à dépasser (URLs concurrents avec faiblesse à exploiter)
-- 3 angles différenciants
-- Signal GEO (entités, données à inclure)
+Return a markdown brief:
+- Meta (title, slug, meta-desc, intent, format)
+- H2/H3 outline (6-10 H2s)
+- FAQ (5-8 questions from nearby fan-outs)
+- Sources to cite (4-6 authority domains)
+- Sources to beat (competitor URLs with a weakness to exploit)
+- 3 differentiating angles
+- GEO signal (entities, data to include)
 
-Règles : titre = fan-out reformulé, outline alignée sur l'intent, sources factuelles.
+Rules: title = reworded fan-out, outline aligned with intent, factual sources.
 ```
 
-## Exemple de livrable
+## Sample deliverable
 
 ```markdown
-# Brief d'article — Comparatif des [catégorie] open source en 2026
+# Article brief — Comparison of open source [category] tools in 2026
 
-> Sujet basé sur le fan-out : "comparatif [catégorie] open source 2026"
-> Fréquence : 38 · LLMs concernés : ChatGPT, Perplexity, Gemini, Claude
+> Topic based on the fan-out: "open source [category] comparison 2026"
+> Frequency: 38 · LLMs involved: ChatGPT, Perplexity, Gemini, Claude
 
-## 1. Méta
+## 1. Meta
 
-- **Titre H1** : Les 7 meilleurs [catégorie] open source en 2026 — comparatif complet
-- **Slug** : `/blog/comparatif-[categorie]-open-source-2026`
-- **Méta-desc** : Notre comparatif des 7 meilleurs [catégorie] open source en 2026 : fonctionnalités, communauté, courbe d'apprentissage et alternatives commerciales. (152 car)
-- **Intent** : Comparatif
-- **Format** : Article long-form 2500-3500 mots avec tableau récap + JSON-LD ItemList
+- **H1 title**: The 7 best open source [category] tools in 2026 — full comparison
+- **Slug**: `/blog/comparatif-[categorie]-open-source-2026`
+- **Meta-desc**: Our comparison of the 7 best open source [category] tools in 2026: features, community, learning curve and commercial alternatives. (152 chars)
+- **Intent**: Comparative
+- **Format**: Long-form article 2500-3500 words with a summary table + ItemList JSON-LD
 
 ## 2. Outline
 
-- ## H2 — Pourquoi choisir un [catégorie] open source en 2026
-  - ### H3 — Avantages vs solutions propriétaires
-  - ### H3 — Limites à connaître
-- ## H2 — Notre méthodologie de comparaison
-  - ### H3 — Critères évalués
-  - ### H3 — Période de test
-- ## H2 — Tool 1 : [Nom] — le plus populaire
-  - ### H3 — Points forts
-  - ### H3 — Points faibles
-  - ### H3 — Pour qui
-- ## H2 — Tool 2 : [Nom] — le plus complet
-- ## H2 — Tool 3 à 7 (même structure)
-- ## H2 — Tableau récapitulatif
-- ## H2 — Open source vs commercial : que choisir ?
+- ## H2 — Why choose an open source [category] tool in 2026
+  - ### H3 — Advantages vs proprietary solutions
+  - ### H3 — Limitations to know about
+- ## H2 — Our comparison methodology
+  - ### H3 — Criteria evaluated
+  - ### H3 — Test period
+- ## H2 — Tool 1: [Name] — the most popular
+  - ### H3 — Strengths
+  - ### H3 — Weaknesses
+  - ### H3 — Who it's for
+- ## H2 — Tool 2: [Name] — the most complete
+- ## H2 — Tools 3 to 7 (same structure)
+- ## H2 — Summary table
+- ## H2 — Open source vs commercial: which to choose?
 - ## H2 — FAQ
 
 ## 3. FAQ
 
-- **Q : Quel est le meilleur [catégorie] open source pour une PME ?** — synthèse des 2-3 outils les plus accessibles avec le bon ratio simplicité/puissance
-- **Q : Open source est-il vraiment gratuit ?** — clarifier les coûts cachés (hosting, support, maintenance)
-- **Q : Peut-on migrer d'une solution propriétaire vers l'open source ?** — guide express + outils de migration
-- **Q : Quelle alternative open source à CompetitorA ?** — comparatif sur 3 critères clés
-- **Q : Quel [catégorie] open source pour démarrer en solo ?** — recommandation 1 outil + raisons
-- **Q : Comment évaluer la santé d'un projet open source ?** — checklist (commits, contributors, roadmap, communauté)
+- **Q: What is the best open source [category] tool for an SMB?** — a synthesis of the 2-3 most accessible tools with the right simplicity/power ratio
+- **Q: Is open source really free?** — clarify the hidden costs (hosting, support, maintenance)
+- **Q: Can you migrate from a proprietary solution to open source?** — quick guide + migration tools
+- **Q: What open source alternative to CompetitorA?** — comparison on 3 key criteria
+- **Q: Which open source [category] tool to start solo?** — recommend 1 tool + reasons
+- **Q: How do you assess the health of an open source project?** — checklist (commits, contributors, roadmap, community)
 
-## 4. Sources à citer
+## 4. Sources to cite
 
-| Domaine | Pourquoi | URL si connue |
+| Domain | Why | URL if known |
 |---|---|---|
-| github.com | Référence absolue pour le contexte projet | github.com/<projet>/<repo> |
-| g2.com | Avis utilisateurs structurés | g2.com/categories/[catégorie] |
-| capterra.com | Comparatif PME | capterra.com/[catégorie]-software/ |
-| reddit.com (r/[subreddit]) | Validation sociale, débats récents | – |
-| [media-sectoriel].com | Autorité éditoriale du secteur | – |
+| github.com | Absolute reference for project context | github.com/<project>/<repo> |
+| g2.com | Structured user reviews | g2.com/categories/[category] |
+| capterra.com | SMB comparison | capterra.com/[category]-software/ |
+| reddit.com (r/[subreddit]) | Social proof, recent debates | – |
+| [industry-media].com | Editorial authority of the sector | – |
 
-## 5. Sources à dépasser (concurrents qui ressortent)
+## 5. Sources to beat (competitors that surface)
 
-| Concurrent | Page concurrente | Faiblesse |
+| Competitor | Competitor page | Weakness |
 |---|---|---|
-| CompetitorA | competitora.com/blog/best-open-source-tools | Non daté, liste 5 outils seulement, pas de tableau |
-| CompetitorB | competitorb.com/comparison/open-source | Liste de 3 outils, ton trop promotionnel |
-| [autre source] | exemple.com/2024-comparison | Datée 2024, peut être dépassée par un comparatif 2026 frais |
+| CompetitorA | competitora.com/blog/best-open-source-tools | Undated, lists only 5 tools, no table |
+| CompetitorB | competitorb.com/comparison/open-source | Lists 3 tools, too promotional in tone |
+| [other source] | example.com/2024-comparison | Dated 2024, can be outdone by a fresh 2026 comparison |
 
-## 6. Angles différenciants
+## 6. Differentiating angles
 
-1. **Donnée originale** : benchmark perf/install des 7 outils sur même VM, chiffres publiables
-2. **Format unique** : calculator interactif "quel outil pour mon use case" (3 questions → 1 reco)
-3. **Posture éditoriale** : avis tranché en conclusion, on désigne un winner par profil utilisateur
+1. **Original data**: perf/install benchmark of the 7 tools on the same VM, publishable numbers
+2. **Unique format**: interactive "which tool for my use case" calculator (3 questions → 1 rec)
+3. **Editorial stance**: a clear verdict in the conclusion, we name a winner per user profile
 
-## 7. Signal GEO
+## 7. GEO signal
 
-- Entités produits : [Tool 1 à 7 + leurs alternatives commerciales]
-- Entités contexte : open source, PME, self-hosted, cloud
-- Données à inclure : install size, RAM minimum, nombre de stars GitHub, dernière release, taille communauté
+- Product entities: [Tools 1 to 7 + their commercial alternatives]
+- Context entities: open source, SMB, self-hosted, cloud
+- Data to include: install size, minimum RAM, number of GitHub stars, last release, community size
 ```
 
-## Variantes
+## Variants
 
-- **Brief court (1500 mots)** : ajoute "format article condensé 1500 mots, 5 H2 max"
-- **Brief landing produit** : "format landing page avec hero + 3 sections + CTA"
-- **Brief multilingue** : "produis le brief en FR puis EN"
-- **Brief conversationnel** : "structure pour réponse directe LLM (paragraphe-réponse en intro, sources visibles)"
+- **Short brief (1500 words)**: add "condensed 1500-word article format, 5 H2s max"
+- **Product landing brief**: "landing page format with hero + 3 sections + CTA"
+- **Multilingual brief**: "produce the brief in FR then EN"
+- **Conversational brief**: "structure for a direct LLM answer (answer-paragraph up front, visible sources)"
 
-## Aller plus loin
+## Going further
 
-- [Content gap pour identifier le prochain sujet](04-fan-outs-pour-briefs-articles.md)
-- [Reverse engineering pour creuser le concurrent dominant](03-reverse-engineering-concurrents.md)
+- [Content gap to identify the next topic](04-fan-outs-pour-briefs-articles.md)
+- [Reverse engineering to dig into the dominant competitor](03-reverse-engineering-concurrents.md)

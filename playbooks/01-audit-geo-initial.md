@@ -1,150 +1,150 @@
-# Playbook 01 — Audit GEO initial
+# Playbook 01 — Initial GEO audit
 
-> Premier réflexe quand on prend en main un projet Mentionable : **où en est-on ?**
-> Cet audit donne un état des lieux exec-ready en 2 minutes, prêt à être envoyé à un client.
+> First reflex when you take over a Mentionable project: **where do things stand?**
+> This audit gives an exec-ready status report in 2 minutes, ready to send to a client.
 
-## Objectif
+## Goal
 
-Produire un diagnostic GEO complet d'un projet : visibilité par LLM, Share of Voice, top concurrents, top sources, fan-outs prioritaires, et 3 actions à mener.
+Produce a complete GEO diagnosis of a project: visibility by LLM, Share of Voice, top competitors, top sources, priority fan-outs, and 3 actions to take.
 
-## Pour qui
+## Who it's for
 
-- **Consultant SEO freelance** qui prend un nouveau client
-- **SEO in-house** qui setup le tracking et veut un baseline
-- **Agence SEO** qui audite un projet existant
-- **Agence web** qui veut chiffrer une mission GEO
+- **Freelance SEO consultant** taking on a new client
+- **In-house SEO** setting up tracking and wanting a baseline
+- **SEO agency** auditing an existing project
+- **Web agency** wanting to scope a GEO engagement
 
-## Pré-requis
+## Prerequisites
 
-- MCP Mentionable installé (voir [getting-started](../docs/getting-started.md))
-- Au moins 1 projet Mentionable avec des prompts trackés
-- 24-48h de tracking pour avoir des données significatives
+- Mentionable MCP installed (see [getting-started](../docs/getting-started.md))
+- At least 1 Mentionable project with tracked prompts
+- 24-48h of tracking to get meaningful data
 
-## Tools MCP utilisés
+## MCP tools used
 
-- `list_projects` — identification du projet
-- `list_prompts` — visibilité par LLM
+- `list_projects` — project identification
+- `list_prompts` — visibility by LLM
 - `list_competitors` — Share of Voice
-- `list_llm_sources` — écosystème de sources
-- `list_fan_outs` — requêtes fan-out
+- `list_llm_sources` — source ecosystem
+- `list_fan_outs` — fan-out prompts
 
-## Sur Claude Code
+## On Claude Code
 
 ```
 /mentionable-audit
 ```
 
-Avec un projet précis :
+With a specific project:
 
 ```
-/mentionable-audit nom-de-mon-projet
+/mentionable-audit my-project-name
 ```
 
-## Sur Cursor / Claude Desktop / autre client MCP
+## On Cursor / Claude Desktop / another MCP client
 
-Copie-colle le prompt suivant dans ton chat (le client appellera les tools MCP automatiquement) :
+Copy-paste the following prompt into your chat (the client will call the MCP tools automatically):
 
 ```text
-Tu es un consultant GEO senior. Produis un audit GEO exec-ready d'un projet Mentionable.
+You are a senior GEO consultant. Produce an exec-ready GEO audit of a Mentionable project.
 
-1. Identifie le projet :
-   - Si je précise un nom : list_projects(filters.nameContains: "<nom>")
-   - Sinon : list_projects() et prends le seul disponible (sinon demande)
+1. Identify the project:
+   - If I specify a name: list_projects(filters.nameContains: "<name>")
+   - Otherwise: list_projects() and take the only one available (otherwise ask)
 
-2. Collecte en parallèle :
+2. Collect in parallel:
    - list_prompts(projectId, limit: 100)
    - list_competitors(projectId, filters.status: ["CONFIRMED"], limit: 20, sortBy: "mentions_desc")
    - list_llm_sources(projectId, limit: 50, sortBy: "appearances_desc")
    - list_fan_outs(projectId, limit: 30, sortBy: "frequency")
 
-3. Rends un rapport markdown structuré :
-   - Vue d'ensemble (prompts, concurrents, LLMs)
-   - Visibilité par LLM (tableau)
-   - Top 5 concurrents Share of Voice (tableau)
-   - Top 10 fan-outs avec statut "couvert / à travailler"
-   - Top 10 sources LLM (tableau)
-   - 3 actions prioritaires (action / pourquoi / comment)
+3. Return a structured markdown report:
+   - Overview (prompts, competitors, LLMs)
+   - Visibility by LLM (table)
+   - Top 5 competitors by Share of Voice (table)
+   - Top 10 fan-outs with "covered / to work on" status
+   - Top 10 LLM sources (table)
+   - 3 priority actions (action / why / how)
 
-Règles : données uniquement, pas d'invention, format compact, tone exec.
+Rules: data only, no invention, compact format, exec tone.
 ```
 
-## Exemple de livrable
+## Sample deliverable
 
 ```markdown
-# Audit GEO — Acme SaaS
+# GEO Audit — Acme SaaS
 
-> Période d'analyse : 7 derniers jours
+> Analysis period: last 7 days
 
-## 1. Vue d'ensemble
+## 1. Overview
 
-- Prompts trackés : 24 (dont 22 actifs)
-- Concurrents confirmés : 8
-- LLMs couverts : ChatGPT, Perplexity, Gemini, Claude, Google AIO
-- Domaines détectés dans l'écosystème : 142
+- Tracked prompts: 24 (22 active)
+- Confirmed competitors: 8
+- LLMs covered: ChatGPT, Perplexity, Gemini, Claude, Google AIO
+- Domains detected in the ecosystem: 142
 
-## 2. Visibilité par LLM
+## 2. Visibility by LLM
 
-| LLM | Prompts couverts | Taux moyen | Note |
+| LLM | Prompts covered | Average rate | Note |
 |---|---|---|---|
-| ChatGPT | 18/24 | 42% | moyen |
-| Perplexity | 22/24 | 67% | fort |
-| Gemini | 9/24 | 18% | faible |
-| Claude | 12/24 | 28% | moyen |
-| Google AIO | 6/24 | 12% | faible |
+| ChatGPT | 18/24 | 42% | medium |
+| Perplexity | 22/24 | 67% | strong |
+| Gemini | 9/24 | 18% | weak |
+| Claude | 12/24 | 28% | medium |
+| Google AIO | 6/24 | 12% | weak |
 
-## 3. Share of Voice — Top 5 concurrents
+## 3. Share of Voice — Top 5 competitors
 
-| Concurrent | Mentions | LLMs présents | Statut |
+| Competitor | Mentions | LLMs present | Status |
 |---|---|---|---|
 | CompetitorA | 187 | 5/5 | leader |
-| Acme SaaS (nous) | 124 | 5/5 | challenger |
+| Acme SaaS (us) | 124 | 5/5 | challenger |
 | CompetitorB | 98 | 4/5 | challenger |
-| CompetitorC | 67 | 3/5 | suiveur |
+| CompetitorC | 67 | 3/5 | follower |
 | CompetitorD | 41 | 2/5 | niche |
 
 ## 4. Top 10 fan-outs
 
-| Fan-out | Fréquence | LLMs | Statut |
+| Fan-out | Frequency | LLMs | Status |
 |---|---|---|---|
-| meilleur outil [catégorie] PME 2026 | 47 | 4/5 | couvert |
-| comparatif [catégorie] open source | 38 | 3/5 | à travailler |
-| [catégorie] avis utilisateurs | 31 | 5/5 | couvert |
+| best [category] tool SMB 2026 | 47 | 4/5 | covered |
+| open source [category] comparison | 38 | 3/5 | to work on |
+| [category] user reviews | 31 | 5/5 | covered |
 | ... | | | |
 
-## 5. Top 10 sources de l'écosystème
+## 5. Top 10 ecosystem sources
 
-| Domaine | Apparitions | Type dominant |
+| Domain | Appearances | Dominant type |
 |---|---|---|
 | reddit.com | 89 | cited |
 | g2.com | 67 | cited |
 | capterra.com | 54 | consulted |
-| [media-sectoriel].com | 41 | cited |
+| [industry-media].com | 41 | cited |
 | ... | | |
 
-## 6. 3 actions prioritaires
+## 6. 3 priority actions
 
-1. **Travailler la visibilité Gemini** (18% vs 67% sur Perplexity)
-   — Pourquoi : asymétrie nette, Gemini consulte d'autres sources
-   — Comment : `/mentionable-sov` puis `/mentionable-content-gap` filtré sur Gemini
+1. **Work on Gemini visibility** (18% vs 67% on Perplexity)
+   — Why: clear asymmetry, Gemini consults other sources
+   — How: `/mentionable-sov` then `/mentionable-content-gap` filtered on Gemini
 
-2. **Reverse engineering de CompetitorA** (leader SoV avec 35% de présence)
-   — Pourquoi : il domine sur tous les LLMs, comprendre ses canaux
-   — Comment : `/mentionable-reverse CompetitorA`
+2. **Reverse engineer CompetitorA** (SoV leader with 35% presence)
+   — Why: it dominates across all LLMs, understand its channels
+   — How: `/mentionable-reverse CompetitorA`
 
-3. **Combler le fan-out "comparatif open source"** (38 occurrences, non couvert)
-   — Pourquoi : intent fort, on n'apparaît sur aucun LLM
-   — Comment : `/mentionable-brief comparatif [catégorie] open source`
+3. **Fill the "open source comparison" fan-out** (38 occurrences, not covered)
+   — Why: strong intent, we don't appear on any LLM
+   — How: `/mentionable-brief open source [category] comparison`
 ```
 
-## Variantes
+## Variants
 
-- **Audit hebdomadaire** : enchaîne avec `/mentionable-weekly` pour suivre les évolutions
-- **Audit par persona** : ajoute "filtre les prompts par personaIds: [...]" si tu as des personas configurés
-- **Audit par pays** : ajoute `filters.country: "FR"` aux `list_prompts`
-- **Audit court (5 prompts)** : pour démo client, demande un audit "version condensée 1 page"
+- **Weekly audit**: chain into `/mentionable-weekly` to track changes
+- **Audit by persona**: add "filter prompts by personaIds: [...]" if you have personas configured
+- **Audit by country**: add `filters.country: "FR"` to `list_prompts`
+- **Short audit (5 prompts)**: for a client demo, ask for a "condensed 1-page version" audit
 
-## Aller plus loin
+## Going further
 
-- [Reverse engineering d'un concurrent](03-reverse-engineering-concurrents.md) — décortiquer les canaux du leader SoV
-- [Content gap via fan-outs](04-fan-outs-pour-briefs-articles.md) — backlog éditorial issu de l'audit
-- [Reporting hebdo client](08-reporting-hebdo-geo.md) — automatiser le suivi
+- [Reverse engineering a competitor](03-reverse-engineering-concurrents.md) — break down the SoV leader's channels
+- [Content gap via fan-outs](04-fan-outs-pour-briefs-articles.md) — editorial backlog from the audit
+- [Weekly client report](08-reporting-hebdo-geo.md) — automate tracking

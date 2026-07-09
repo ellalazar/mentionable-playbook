@@ -1,45 +1,45 @@
-# Playbook 12 — Clusters discovery (passerelle fan-outs → pilier)
+# Playbook 12 — Clusters discovery (fan-outs → pillar bridge)
 
-> **Slash command** : [`/mentionable-clusters`](../.claude/commands/mentionable-clusters.md)
-> **Pour qui** : SEO content, agence, in-house qui veut transformer le signal LLM brut d'un projet Mentionable en un catalogue de seeds prêts à produire
-> **Livrable** : `projects/<projet>/discovery/<YYYY-MM-DD>/{clusters.json, clusters.md, fan-outs-raw.json}`
+> **Slash command**: [`/mentionable-clusters`](../.claude/commands/mentionable-clusters.md)
+> **Who it's for**: SEO content, agencies, in-house teams who want to turn a Mentionable project's raw LLM signal into a catalog of ready-to-produce seeds
+> **Deliverable**: `projects/<projet>/discovery/<YYYY-MM-DD>/{clusters.json, clusters.md, fan-outs-raw.json}`
 
-## Pourquoi
+## Why
 
-Le workflow GEO complet :
+The full GEO workflow:
 
 ```
-[Fan-outs LLM bruts]   ← collectés par le scan Mentionable
+[Raw LLM fan-outs]     ← collected by the Mentionable scan
        ↓
-   Clustering          ← /mentionable-clusters (cette commande)
+   Clustering          ← /mentionable-clusters (this command)
        ↓
-[Seeds prêts]
+[Ready seeds]
        ↓
-   Plan pilier+sat.    ← /mentionable-pillar
+   Pillar+sat. plan    ← /mentionable-pillar
        ↓
-   Brief article       ← /mentionable-brief (optionnel)
+   Article brief       ← /mentionable-brief (optional)
        ↓
-   Rédaction GEO       ← /mentionable-article
+   GEO writing         ← /mentionable-article
        ↓
    Images              ← /mentionable-images
 ```
 
-Avant cette commande, le pont entre les **fan-outs LLM** (signal réel) et la **production de contenu** (DataForSEO + rédaction) était implicite : il fallait choisir manuellement un seed keyword, puis lancer `/mentionable-pillar`. Pas d'historique, pas de traçabilité.
+Before this command, the bridge between the **LLM fan-outs** (the real signal) and **content production** (DataForSEO + writing) was implicit: you had to manually pick a seed keyword, then run `/mentionable-pillar`. No history, no traceability.
 
-`/mentionable-clusters` matérialise ce pont sous forme de fichier `clusters.json` consommable par `/mentionable-pillar --from-cluster`. Bénéfices :
+`/mentionable-clusters` materializes that bridge as a `clusters.json` file consumable by `/mentionable-pillar --from-cluster`. Benefits:
 
-1. **Discovery automatisée** : tu vois en 30 secondes les 15 thèmes principaux que les LLMs interrogent sur ton projet.
-2. **Seeds prêts à passer** : chaque cluster a un `seedSuggested` neutre, exploitable par DataForSEO.
-3. **Historique daté** : chaque snapshot `discovery/<date>/` garde une photo du signal LLM à un moment T. Tu peux comparer mois sur mois.
-4. **Idempotence** : si tu relances le même jour, la commande te propose de repartir du cache.
+1. **Automated discovery**: in 30 seconds you see the 15 main themes the LLMs are querying about on your project.
+2. **Ready-to-pass seeds**: each cluster has a neutral `seedSuggested`, usable by DataForSEO.
+3. **Dated history**: each `discovery/<date>/` snapshot keeps a picture of the LLM signal at a given point in time. You can compare month over month.
+4. **Idempotence**: if you rerun the same day, the command offers to start from cache.
 
-## Pré-requis
+## Prerequisites
 
-1. Un projet Mentionable actif avec des fan-outs collectés. Si le scan n'est pas encore actif, lance-le sur app.mentionable.ai et reviens plus tard.
-2. MCP Mentionable installé (tools `list_projects`, `list_fan_outs`, `list_prompts` accessibles).
-3. Optionnel : `.project.json` déjà présent dans `projects/<projet>/` (créé automatiquement par `/mentionable-pillar` ou cette commande au premier run).
+1. An active Mentionable project with collected fan-outs. If the scan isn't active yet, launch it on app.mentionable.ai and come back later.
+2. Mentionable MCP installed (`list_projects`, `list_fan_outs`, `list_prompts` tools accessible).
+3. Optional: `.project.json` already present in `projects/<projet>/` (created automatically by `/mentionable-pillar` or by this command on the first run).
 
-## Comment utiliser
+## How to use
 
 ### Via Claude Code
 
@@ -47,15 +47,15 @@ Avant cette commande, le pont entre les **fan-outs LLM** (signal réel) et la **
 /mentionable-clusters
 ```
 
-L'agent te demande de sélectionner le projet si plusieurs sont disponibles.
+The agent asks you to select the project if several are available.
 
-### Sur un projet spécifique
+### On a specific project
 
 ```
 /mentionable-clusters mon-client
 ```
 
-ou un path :
+or a path:
 
 ```
 /mentionable-clusters projects/mon-client
@@ -63,20 +63,20 @@ ou un path :
 
 ### Via Cursor / Claude Desktop
 
-Copie le prompt de [`.claude/commands/mentionable-clusters.md`](../.claude/commands/mentionable-clusters.md), remplace `$ARGUMENTS`.
+Copy the prompt from [`.claude/commands/mentionable-clusters.md`](../.claude/commands/mentionable-clusters.md), replace `$ARGUMENTS`.
 
-## Le pipeline en 8 étapes
+## The pipeline in 8 steps
 
-1. **Sélection projet** — depuis path ou interactif via `list_projects`.
-2. **Cache check** — si `discovery/<today>/clusters.json` existe, propose cache ou refresh.
+1. **Project selection** — from a path or interactively via `list_projects`.
+2. **Cache check** — if `discovery/<today>/clusters.json` exists, offer cache or refresh.
 3. **Fetch fan-outs** — `list_fan_outs(limit: 100, sortBy: frequency)`.
-4. **Fetch prompts trackés** — `list_prompts(limit: 100)` pour le flag coverage.
-5. **Classification intent** — règles regex sur les queries.
-6. **Clustering thème + intent** — tokens partagés, sous-clusters par intent si pertinent, cap à 15.
-7. **Écriture** — `clusters.json`, `clusters.md`, `fan-outs-raw.json`.
-8. **Console** — top 5 clusters + commandes prêtes à coller.
+4. **Fetch tracked prompts** — `list_prompts(limit: 100)` for the coverage flag.
+5. **Intent classification** — regex rules on the queries.
+6. **Theme + intent clustering** — shared tokens, sub-clusters by intent where relevant, capped at 15.
+7. **Writing** — `clusters.json`, `clusters.md`, `fan-outs-raw.json`.
+8. **Console** — top 5 clusters + ready-to-paste commands.
 
-## Structure du `clusters.json`
+## Structure of the `clusters.json`
 
 ```json
 {
@@ -101,26 +101,26 @@ Copie le prompt de [`.claude/commands/mentionable-clusters.md`](../.claude/comma
 }
 ```
 
-Chaque cluster est **autonome** : tu peux le passer tel quel à `/mentionable-pillar --from-cluster` qui :
-- skip la sélection projet (path implicite)
-- réutilise les fan-outs sans re-call MCP
-- référence le cluster source dans le `plan.md` généré (traçabilité)
+Each cluster is **self-contained**: you can pass it as-is to `/mentionable-pillar --from-cluster`, which:
+- skips project selection (implicit path)
+- reuses the fan-outs without re-calling MCP
+- references the source cluster in the generated `plan.md` (traceability)
 
-## Workflow complet : fan-outs → article publié
+## Full workflow: fan-outs → published article
 
 ```
 # 1. Discovery
 /mentionable-clusters mon-client
   → projects/mon-client/discovery/2026-05-11/clusters.json
-  → top 5 clusters affichés avec commandes suggérées
+  → top 5 clusters shown with suggested commands
 
-# 2. Choix d'un cluster (ex : cluster-1 = "coach CNV en ligne")
+# 2. Pick a cluster (e.g. cluster-1 = "coach CNV en ligne")
 /mentionable-pillar "coach communication non violente en ligne" \
   --project-slug mon-client \
   --from-cluster projects/mon-client/discovery/2026-05-11/clusters.json#cluster-1
   → projects/mon-client/pillars/coach-cnv-en-ligne/plan.md
 
-# 3. Rédaction du pilier
+# 3. Write the pillar
 /mentionable-article projects/mon-client/pillars/coach-cnv-en-ligne
   → projects/mon-client/articles/coach-cnv-en-ligne/article.md
   → + jsonld.json + sources.json + meta.json
@@ -130,35 +130,35 @@ Chaque cluster est **autonome** : tu peux le passer tel quel à `/mentionable-pi
   → projects/mon-client/articles/coach-cnv-en-ligne/images/
 ```
 
-## Cadence recommandée
+## Recommended cadence
 
-- **Premier run** : dès qu'un projet a accumulé 30+ fan-outs (typiquement 2-3 semaines après l'activation du scan).
-- **Runs suivants** : toutes les 2-4 semaines pour observer l'évolution des fan-outs (nouveaux thèmes, hausse de fréquence sur certains clusters, apparition de marques concurrentes).
-- **À ignorer** : ne pas lancer plusieurs fois par jour, le signal LLM bouge sur des cycles hebdomadaires/mensuels.
+- **First run**: as soon as a project has accumulated 30+ fan-outs (typically 2-3 weeks after activating the scan).
+- **Subsequent runs**: every 2-4 weeks to observe how the fan-outs evolve (new themes, rising frequency on some clusters, competitor brands appearing).
+- **When to skip it**: don't run it several times a day; the LLM signal moves on weekly/monthly cycles.
 
-## Comparer deux snapshots
+## Comparing two snapshots
 
-Pour voir ce qui a évolué entre deux dates :
+To see what changed between two dates:
 
 ```bash
 diff projects/<projet>/discovery/2026-05-11/clusters.json \
      projects/<projet>/discovery/2026-06-15/clusters.json
 ```
 
-Les nouveaux clusters apparus, les hausses de fréquence et les LLMs nouvellement concernés sont les signaux les plus actionnables.
+New clusters that appeared, frequency increases, and newly concerned LLMs are the most actionable signals.
 
-## Différence avec `/mentionable-content-gap`
+## Difference from `/mentionable-content-gap`
 
-`/mentionable-content-gap` produit un **backlog d'articles** priorisé par score (info / comparatif / trans / reviews) à partir des fan-outs. Output : table Markdown directement actionnable par un rédacteur.
+`/mentionable-content-gap` produces an **article backlog** prioritized by score (info / comparison / trans / reviews) from the fan-outs. Output: a Markdown table directly actionable by a writer.
 
-`/mentionable-clusters` produit un **catalogue de seeds** consommable par les autres commandes (`/mentionable-pillar`, `/mentionable-brief`). Output : fichier `clusters.json` + résumé `clusters.md`. C'est plus une **donnée structurée** qu'un livrable éditorial.
+`/mentionable-clusters` produces a **seed catalog** consumable by the other commands (`/mentionable-pillar`, `/mentionable-brief`). Output: a `clusters.json` file + a `clusters.md` summary. It's more **structured data** than an editorial deliverable.
 
-Les deux sont complémentaires :
-- Tu utilises `/mentionable-clusters` pour piloter la production multi-piliers sur un projet (vision macro, plusieurs mois).
-- Tu utilises `/mentionable-content-gap` pour livrer un backlog éditorial à un rédacteur à un instant T.
+The two are complementary:
+- Use `/mentionable-clusters` to steer multi-pillar production on a project (macro view, several months).
+- Use `/mentionable-content-gap` to hand a writer an editorial backlog at a point in time.
 
-## Coûts
+## Costs
 
-- **Modèle Claude** : ~5-15k tokens (les fan-outs sont compacts, le clustering est rapide).
-- **MCP Mentionable** : 2 calls (`list_fan_outs`, `list_prompts`). Pas de coût tiers.
-- **DataForSEO** : aucun (cette commande ne touche pas DataForSEO).
+- **Claude model**: ~5-15k tokens (the fan-outs are compact, the clustering is fast).
+- **Mentionable MCP**: 2 calls (`list_fan_outs`, `list_prompts`). No third-party cost.
+- **DataForSEO**: none (this command doesn't touch DataForSEO).

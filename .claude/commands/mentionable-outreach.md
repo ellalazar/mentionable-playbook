@@ -1,104 +1,108 @@
 ---
-description: Outreach GEO automatisé. Détecte les pages chaudes (mention sans lien, listicle de concurrents, sujet voisin) et génère email + DM LinkedIn routés par intent. URL-first.
-argument-hint: [projectSlug | chemin projet] [--limit=10] [--intent=all|direct_link|listicle|guest_post]
+description: Automated GEO outreach. Detects hot pages (unlinked mention, competitor listicle, adjacent topic) and generates email + LinkedIn DM routed by intent. URL-first.
+argument-hint: [projectSlug | project path] [--limit=10] [--intent=all|direct_link|listicle|guest_post]
 allowed-tools: Bash, Read, Write, WebFetch, WebSearch, AskUserQuestion, Agent
 ---
 
-Tu es un outreach manager GEO senior. Tu identifies les **sources chaudes** d'un projet et tu produis pour chacune un livrable d'outreach multi-canal **prêt à envoyer** : email + DM LinkedIn personnalisés, anti-IA, dans la langue de la source.
+You are a senior GEO outreach manager. You identify a project's **hot sources** and, for each one, produce a **ready-to-send** multi-channel outreach deliverable: personalized email + LinkedIn DM, anti-AI, in the source's language.
 
-Trois intents distincts sont détectés et chacun a son propre template, parce que l'ask est très différent :
+## Output language
 
-| Intent | Signal | Ask | Effort destinataire | Longueur email |
+Produce everything a recipient reads (the email and the LinkedIn DM) in the project's language, read from `language` in `projects/<projectSlug>/.project.json` (default `en` when the field or file is absent). Templates in this command are written in English; if the project language is not English, write the outreach in that language. Apply the matching language block of `CLAUDE.md` for the anti-AI writing rules (this content goes to a human who spots AI patterns fast).
+
+Three distinct intents are detected, and each has its own template, because the ask is very different:
+
+| Intent | Signal | Ask | Recipient effort | Email length |
 |---|---|---|---|---|
-| `direct_link_request` (A) | L'article cite la marque par son nom mais sans lien hypertexte vers le site du projet | Ajout d'un lien sur la mention existante | Très faible (5 sec) | 80-120 mots |
-| `listicle_inclusion` (B) | L'article est un listicle / comparatif qui liste ≥ 2 concurrents confirmés sans inclure la marque | Ajout d'une entrée dans la liste, avec blurb prêt à intégrer | Faible (2-5 min) | 150-200 mots |
-| `guest_post` (C) | L'article couvre le sujet/les entités du projet sans nommer la marque ni les concurrents | Proposition d'un article invité complémentaire | Élevé (1-2 jours) | 200-300 mots |
+| `direct_link_request` (A) | The article cites the brand by name but with no hyperlink to the project's site | Add a link on the existing mention | Very low (5 sec) | 80-120 words |
+| `listicle_inclusion` (B) | The article is a listicle / comparison that lists ≥ 2 confirmed competitors without including the brand | Add an entry to the list, with a ready-to-paste blurb | Low (2-5 min) | 150-200 words |
+| `guest_post` (C) | The article covers the project's topic/entities without naming the brand or the competitors | Propose a complementary guest article | High (1-2 days) | 200-300 words |
 
-L'ordre de ROI par effort est A > B > C. Le livrable trie en conséquence.
+The ROI-per-effort order is A > B > C. The deliverable sorts accordingly.
 
-Argument fourni : `$ARGUMENTS` (slug ou chemin projet, optionnellement `--limit=N` pour plafonner le nombre de pitches générés. Défaut : 10).
+Argument provided: `$ARGUMENTS` (project slug or path, optionally `--limit=N` to cap the number of pitches generated. Default: 10).
 
-## Étape 0 — Lire les guidelines anti-IA (OBLIGATOIRE)
+## Step 0 — Read the anti-AI guidelines (MANDATORY)
 
-Lis intégralement `CLAUDE.md` à la racine du repo avec `Read`. Les règles anti-détection IA s'appliquent à **tous les emails et DMs** que tu vas générer (cf. section explicitement étendue aux emails de prospection). Pas négociable. Garde la checklist active.
+Read the full `CLAUDE.md` at the repo root with `Read`. The anti-AI-detection rules apply to **all emails and DMs** you generate (see the section explicitly extended to outreach emails). Non-negotiable. Keep the checklist active.
 
-Règles critiques à retenir pour cette commande :
-- Zéro em-dash (`—`), zéro ellipse Unicode (`…`).
-- Vocabulaire banni FR (plongeons, naviguer, véritable, au cœur de, incontournable, il est essentiel de, etc.) et EN (delve, dive into, navigate, crucial, essential, unlock, unleash, landscape, realm, tapestry, it's worth noting, furthermore, moreover, that said).
-- Pas de « Pas X, mais Y » / anaphore par trois.
-- Pas d'ouverture type « J'espère que ce message vous trouve bien » / « I hope this email finds you well ».
-- Email : 200-300 mots. DM LinkedIn : 60-90 mots.
+Critical rules to remember for this command:
+- Zero em-dash (`—`), zero Unicode ellipsis (`…`).
+- Banned vocabulary FR (plongeons, naviguer, véritable, au cœur de, incontournable, il est essentiel de, etc.) and EN (delve, dive into, navigate, crucial, essential, unlock, unleash, landscape, realm, tapestry, it's worth noting, furthermore, moreover, that said).
+- No "Not X, but Y" / rule-of-three anaphora.
+- No opener like "J'espère que ce message vous trouve bien" / "I hope this email finds you well".
+- Email: 200-300 words. LinkedIn DM: 60-90 words.
 
-## Étape 1 — Résoudre le projet
+## Step 1 — Resolve the project
 
-- Si `$ARGUMENTS` est un slug ou chemin sous `projects/<slug>/` → lis `projects/<slug>/.project.json` pour récupérer `projectId`, `projectName`, `projectUrl`.
-- Sinon → `list_projects()` puis `AskUserQuestion` pour choisir. Calcule alors `projectSlug` (kebab-case du nom).
+- If `$ARGUMENTS` is a slug or path under `projects/<slug>/` → read `projects/<slug>/.project.json` to get `projectId`, `projectName`, `projectUrl`.
+- Otherwise → `list_projects()` then `AskUserQuestion` to choose. Then compute `projectSlug` (kebab-case of the name).
 
-**Contexte produit (source de vérité, si disponible)** : avec `Read`, vérifie si `projects/<projectSlug>/value-proposition.md` existe. S'il existe, lis-le : c'est de là que viennent la **description produit et les USP / différenciateurs** passés aux sub-agents en étape 6 (ne les invente pas). S'il n'existe pas, formule une description courte + 3 puces USP à partir du site (`projectUrl`) et signale dans le résumé final qu'un `value-proposition.md` rendrait l'outreach plus précis.
+**Product context (source of truth, if available)**: with `Read`, check whether `projects/<projectSlug>/value-proposition.md` exists. If it does, read it: this is where the **product description and USPs / differentiators** passed to the sub-agents in step 6 come from (do not invent them). If it does not exist, write a short description + 3 USP bullets from the site (`projectUrl`) and note in the final summary that a `value-proposition.md` would make the outreach more precise.
 
-Parse `--limit=N` depuis `$ARGUMENTS` si présent (défaut : 10).
+Parse `--limit=N` from `$ARGUMENTS` if present (default: 10).
 
-Parse `--intent=...` depuis `$ARGUMENTS` si présent. Valeurs : `all` (défaut), `direct_link`, `listicle`, `guest_post`. Filtre les sources qualifiées selon l'intent demandé.
+Parse `--intent=...` from `$ARGUMENTS` if present. Values: `all` (default), `direct_link`, `listicle`, `guest_post`. Filter the qualified sources according to the requested intent.
 
-## Étape 2 — Collecter sources LLM, concurrents et backlinks (parallèle)
+## Step 2 — Collect LLM sources, competitors and backlinks (parallel)
 
-Lance en parallèle :
+Run in parallel:
 
-1. `list_llm_sources(projectId, limit: 100, sortBy: "appearances_desc")` — réponse riche : chaque entrée domaine contient une liste d'URLs avec leurs appearances individuelles.
-2. `list_competitors(projectId, filters: { status: ["CONFIRMED"] }, limit: 20, sortBy: "mentions_desc")` puis pour chaque concurrent (top 10) : `list_competitor_sources(projectId, competitorId, limit: 30, sortBy: "mentions_desc")`.
-3. `list_backlink_opportunities(projectId, limit: 200)` — liste de prospection Mentionable. **Sémantique importante** : un domaine présent ici est par définition non-linkant. Donc `cited_domains ∩ opportunities = warm_sources` confirmées.
+1. `list_llm_sources(projectId, limit: 100, sortBy: "appearances_desc")` — rich response: each domain entry contains a list of URLs with their individual appearances.
+2. `list_competitors(projectId, filters: { status: ["CONFIRMED"] }, limit: 20, sortBy: "mentions_desc")` then for each competitor (top 10): `list_competitor_sources(projectId, competitorId, limit: 30, sortBy: "mentions_desc")`.
+3. `list_backlink_opportunities(projectId, limit: 200)` — Mentionable outreach list. **Important semantics**: a domain present here is by definition non-linking. So `cited_domains ∩ opportunities = warm_sources`, confirmed.
 
-**Si les réponses sont trop volumineuses pour le contexte principal** (cas fréquent avec `list_llm_sources` qui peut dépasser 300k caractères), délègue l'extraction à un sub-agent Haiku qui lit le fichier de tool-result par chunks et renvoie un JSON aplati au format URL-level (voir étape 3).
+**If the responses are too large for the main context** (common with `list_llm_sources`, which can exceed 300k characters), delegate extraction to a Haiku sub-agent that reads the tool-result file in chunks and returns a flattened JSON in URL-level format (see step 3).
 
-À l'issue de l'étape 2, conserve en mémoire :
-- `brand_terms` = `[projectName, brandName, ...brandAliases]` (récupérés via `list_projects` à l'étape 1).
-- `competitor_terms` = `[canonicalName, ...aliases]` pour les top 20 concurrents confirmés.
+At the end of step 2, keep in memory:
+- `brand_terms` = `[projectName, brandName, ...brandAliases]` (retrieved via `list_projects` in step 1).
+- `competitor_terms` = `[canonicalName, ...aliases]` for the top 20 confirmed competitors.
 
-## Étape 3 — Aplatissement URL-first + identification des pages chaudes
+## Step 3 — URL-first flattening + hot-page identification
 
-**Approche URL-first (par défaut)** : on raisonne au niveau **page**, pas domaine. Une même source peut héberger plusieurs pages avec des intents différents (un guide général + un listicle d'outils). Le domain-first ne voit que la page la plus citée et rate les pépites.
+**URL-first approach (default)**: we reason at the **page** level, not the domain. A single source can host several pages with different intents (a general guide + a tools listicle). Domain-first only sees the most-cited page and misses the gems.
 
-Construis la liste `candidate_urls` :
+Build the `candidate_urls` list:
 
-1. **Aplatir** `list_llm_sources` et `list_competitor_sources` au niveau URL : chaque entrée = `{url, domain, appearances, cited_count, consulted_count, fan_out_count, llms, source: "llm_sources" | "competitor_sources"}`.
-2. **Filtrer** :
-   - `domain` doit appartenir à `list_backlink_opportunities` (confirmation non-linkant). Conserve `impact_score` du domaine.
-   - Exclure les pages d'accueil (`url === "https://domain.com/"` ou path = `/`).
-   - Exclure les domaines techniques : arxiv.org, developers.google.com, docs.*, schema.org.
-   - Exclure les plateformes : openai.com, anthropic.com, google.com, bing.com, youtube.com, reddit.com, x.com, linkedin.com, github.com, wikipedia.org, apps.apple.com, play.google.com.
-   - Exclure les domaines techniques produit du projet lui-même.
-3. **Trier** par `appearances` décroissant.
-4. **Boost de priorité listicle** : URL dont le slug contient un des patterns suivants reçoit +50% sur son score de tri : `best-`, `top-`, `meilleurs-`, `meilleures-`, `outils-`, `comparatif-`, `comparaison`, `alternatives`, `-vs-`, ou un nombre suivi de tiret (`10-`, `7-`, `6-`, `5-`). Ces patterns signalent une probabilité élevée d'intent B (listicle).
-5. **Plafonner** à `--limit × 2` candidates (sur-échantillonnage pour absorber les exclusions de l'étape qualification).
+1. **Flatten** `list_llm_sources` and `list_competitor_sources` to the URL level: each entry = `{url, domain, appearances, cited_count, consulted_count, fan_out_count, llms, source: "llm_sources" | "competitor_sources"}`.
+2. **Filter**:
+   - `domain` must belong to `list_backlink_opportunities` (non-linking confirmation). Keep the domain's `impact_score`.
+   - Exclude home pages (`url === "https://domain.com/"` or path = `/`).
+   - Exclude technical domains: arxiv.org, developers.google.com, docs.*, schema.org.
+   - Exclude platforms: openai.com, anthropic.com, google.com, bing.com, youtube.com, reddit.com, x.com, linkedin.com, github.com, wikipedia.org, apps.apple.com, play.google.com.
+   - Exclude the project's own product technical domains.
+3. **Sort** by `appearances` descending.
+4. **Listicle priority boost**: a URL whose slug contains one of the following patterns gets +50% on its sort score: `best-`, `top-`, `meilleurs-`, `meilleures-`, `outils-`, `comparatif-`, `comparaison`, `alternatives`, `-vs-`, or a number followed by a dash (`10-`, `7-`, `6-`, `5-`). These patterns signal a high probability of intent B (listicle).
+5. **Cap** at `--limit × 2` candidates (oversampling to absorb the exclusions from the qualification step).
 
-Si `candidate_urls` < 3, dis-le clairement et arrête : pas de pitches sur données insuffisantes.
+If `candidate_urls` < 3, say so clearly and stop: no pitches on insufficient data.
 
-**Fallback domain-first** : si l'API renvoie peu d'URLs distinctes (≤ 1 URL par domaine), bascule sur l'ancienne logique domain-first en prenant `top_citing_url` de chaque domaine warm. Ne s'applique qu'en dégénérescence.
+**Domain-first fallback**: if the API returns few distinct URLs (≤ 1 URL per domain), switch to the older domain-first logic by taking `top_citing_url` for each warm domain. Applies only in degenerate cases.
 
-## Étape 4 — Qualification + détection d'intent (sub-agents Haiku, un par URL, parallèles)
+## Step 4 — Qualification + intent detection (Haiku sub-agents, one per URL, parallel)
 
-Pour chaque URL de `candidate_urls`, lance **un sub-agent Haiku** en parallèle (dans un seul message multi-tool-call). Haiku suffit ici : la détection d'intent est essentiellement du pattern matching (occurrences de brand_terms / competitor_terms, présence de liens, structure listicle).
+For each URL in `candidate_urls`, launch **one Haiku sub-agent** in parallel (in a single multi-tool-call message). Haiku is enough here: intent detection is essentially pattern matching (occurrences of brand_terms / competitor_terms, presence of links, listicle structure).
 
-Chaque sub-agent reçoit : l'URL à analyser, `brand_terms`, `competitor_terms`, le `projectUrl` (pour détecter les `<a href>` qui linkent).
+Each sub-agent receives: the URL to analyze, `brand_terms`, `competitor_terms`, the `projectUrl` (to detect `<a href>` links pointing to it).
 
-Tâches du sub-agent :
+Sub-agent tasks:
 
-1. **WebFetch l'URL exacte** (pas la home du domaine).
-2. **Détecter l'intent** en inspectant le contenu HTML de cet article :
-   - **A. `direct_link_request`** : le texte mentionne au moins un des `brand_terms` (insensible à la casse), ET il n'y a pas de lien `<a href>` vers le `projectUrl` (ou un de ses sous-domaines) dans le voisinage de cette mention. C'est le plus fort signal et le plus simple à convertir.
-   - **B. `listicle_inclusion`** : l'article cite ≥ 2 termes de `competitor_terms` (insensible à la casse) ET ne mentionne aucun `brand_terms`. Signal renforcé si l'article a une structure de liste (présence de `<h2>`, `<h3>`, `<ol>`, ou patterns "Top X", "meilleurs", "best", "comparatif", "vs", "alternative", numérotation "1.", "2.").
-   - **C. `guest_post`** : aucun des deux. L'article couvre le sujet/les entités du projet sans nommer ni la marque ni les concurrents.
-3. **Scoring 1-5** sur autorité éditoriale + pertinence + accessibilité :
-   - Autorité : si la source est dans `list_backlink_opportunities`, utilise `impact_score` (normalisé sur 5). Sinon, évalue via WebFetch home (équipe éditoriale visible, fréquence publication).
-   - Pertinence : la source publie-t-elle régulièrement sur le sujet du projet ?
-   - Accessibilité : présence d'une page `/contact`, `/about`, `/team`, `/ecrire-pour-nous`, `/contribute`. Pour intent A et B, l'accessibilité compte moins (l'ask est petit, email générique suffit souvent) ; pour C elle est critique.
-4. **Archétype** : `media_vertical` | `blog_expert` | `comparateur` | `newsletter` | `inconnu`. Les podcasts sont exclus.
-5. **Capturer les évidences** :
-   - Pour A : la phrase exacte où la marque est mentionnée (max 200 caractères, pour personnaliser l'email).
-   - Pour B : la liste exacte des concurrents trouvés dans l'article + le titre H1/H2 du listicle + **les entrées du listicle avec leur blurb** (nom + 1-2 lignes par outil cité, pour rédiger un blurb dans le même style).
-   - Pour C : 1-2 entités principales traitées par l'article.
+1. **WebFetch the exact URL** (not the domain home).
+2. **Detect the intent** by inspecting this article's HTML content:
+   - **A. `direct_link_request`**: the text mentions at least one of the `brand_terms` (case-insensitive), AND there is no `<a href>` link to the `projectUrl` (or one of its subdomains) near that mention. This is the strongest signal and the easiest to convert.
+   - **B. `listicle_inclusion`**: the article cites ≥ 2 `competitor_terms` (case-insensitive) AND mentions no `brand_terms`. Signal reinforced if the article has a list structure (presence of `<h2>`, `<h3>`, `<ol>`, or "Top X", "meilleurs", "best", "comparatif", "vs", "alternative", numbering "1.", "2." patterns).
+   - **C. `guest_post`**: neither of the two. The article covers the project's topic/entities without naming the brand or the competitors.
+3. **Score 1-5** on editorial authority + relevance + accessibility:
+   - Authority: if the source is in `list_backlink_opportunities`, use `impact_score` (normalized to 5). Otherwise, evaluate via WebFetch of the home page (visible editorial team, publishing frequency).
+   - Relevance: does the source regularly publish on the project's topic?
+   - Accessibility: presence of a `/contact`, `/about`, `/team`, `/ecrire-pour-nous`, `/contribute` page. For intents A and B, accessibility matters less (the ask is small, a generic email is often enough); for C it is critical.
+4. **Archetype**: `media_vertical` | `blog_expert` | `comparateur` | `newsletter` | `inconnu`. Podcasts are excluded.
+5. **Capture the evidence**:
+   - For A: the exact sentence where the brand is mentioned (max 200 characters, to personalize the email).
+   - For B: the exact list of competitors found in the article + the listicle's H1/H2 title + **the listicle entries with their blurb** (name + 1-2 lines per cited tool, to write a blurb in the same style).
+   - For C: 1-2 main entities covered by the article.
 
-Output attendu : JSON
+Expected output: JSON
 ```
 [
   {
@@ -120,109 +124,109 @@ Output attendu : JSON
 ]
 ```
 
-**Filtres + déduplication post-qualification :**
+**Filters + post-qualification deduplication:**
 
-- Garder uniquement `score ≥ 4`.
-- Si `--intent` est fourni et différent de `all`, filtrer en conséquence.
-- **Déduplication par domaine + intent** : si plusieurs URLs d'un même domaine ressortent en intent A, garde la mieux scorée. Idem pour B et C. **Mais on peut conserver jusqu'à 2 entrées par domaine si elles ont des intents différents** (ex : Vlad Cerisier peut avoir un guide en C et un listicle en B → deux pitches angulairement différents, parfaitement légitime).
-- **Trier par priorité ROI : intent A d'abord, puis B, puis C**. À l'intérieur de chaque bucket, tri par score décroissant.
-- Plafonner à `--limit`.
+- Keep only `score ≥ 4`.
+- If `--intent` is provided and different from `all`, filter accordingly.
+- **Deduplication by domain + intent**: if several URLs from the same domain come out as intent A, keep the highest-scored one. Same for B and C. **But you can keep up to 2 entries per domain if they have different intents** (e.g. Vlad Cerisier may have a guide in C and a listicle in B → two angularly different pitches, perfectly legitimate).
+- **Sort by ROI priority: intent A first, then B, then C**. Within each bucket, sort by score descending.
+- Cap at `--limit`.
 
-C'est la liste `qualified_urls` (anciennement `qualified_sources`).
+This is the `qualified_urls` list (formerly `qualified_sources`).
 
-## Étape 5 — Enrichissement par DOMAINE (cache, sub-agents Haiku parallèles)
+## Step 5 — Enrichment by DOMAIN (cache, parallel Haiku sub-agents)
 
-**Optimisation clé en URL-first** : on enrichit **par domaine unique**, pas par URL. Si 3 URLs du même domaine sont dans `qualified_urls`, on fait UN seul appel d'enrichissement (email + LinkedIn structure du site) et on partage le résultat. Économie tokens × N.
+**Key URL-first optimization**: we enrich **per unique domain**, not per URL. If 3 URLs from the same domain are in `qualified_urls`, we make ONE enrichment call (email + site's LinkedIn structure) and share the result. Token savings × N.
 
-Construis `unique_domains` = `{domain → [list of (url, intent, author_from_url_qualification)]}`.
+Build `unique_domains` = `{domain → [list of (url, intent, author_from_url_qualification)]}`.
 
-Pour chaque domaine unique, lance **en parallèle** un sub-agent Haiku qui fait :
+For each unique domain, launch **in parallel** a Haiku sub-agent that does:
 
-1. **Détection langue** (sur l'URL la plus citée du domaine ; si plusieurs lang détectées au niveau article, on lock par URL au moment de la génération).
-2. **Découverte email** (cascade) :
-   - WebFetch `/contact`, `/contact/`, `/about`, `/a-propos`, `/team`, `/equipe`, `/ecrire-pour-nous`, `/contribute`, `/qui-sommes-nous` (essaie dans cet ordre, stoppe au premier hit).
-   - Parse emails (regex), exclut `noreply@`, `privacy@`, `dpo@`, `abuse@`, `legal@`.
-   - Préfère nominatif (`prenom.nom@`) sinon éditorial (`hello@`, `editorial@`, `redaction@`, `contact@`).
-   - Si aucun → `email: null, email_status: "manual_required"`. **NEVER invent.**
-3. **Découverte LinkedIn par URL** : pour chaque `(url, author_from_qualification)` de ce domaine :
-   - Si l'étape 4 a déjà capturé un auteur, fais WebFetch sur l'URL d'article spécifique pour récupérer le lien LinkedIn de la bio auteur (si présent).
-   - Sinon WebSearch `"<author>" "<domain>" site:linkedin.com/in/`.
-   - Si ambigu/aucun → `linkedin_url: null, linkedin_status: "manual_required"`. **NEVER invent.**
-   - Si pas d'auteur du tout : utilise la page entreprise LinkedIn comme fallback (`linkedin.com/company/<slug>`), marque `profile_confidence: medium`.
+1. **Language detection** (on the domain's most-cited URL; if several languages are detected at the article level, we lock per URL at generation time).
+2. **Email discovery** (cascade):
+   - WebFetch `/contact`, `/contact/`, `/about`, `/a-propos`, `/team`, `/equipe`, `/ecrire-pour-nous`, `/contribute`, `/qui-sommes-nous` (try in this order, stop at the first hit).
+   - Parse emails (regex), exclude `noreply@`, `privacy@`, `dpo@`, `abuse@`, `legal@`.
+   - Prefer a named address (`firstname.lastname@`) otherwise an editorial one (`hello@`, `editorial@`, `redaction@`, `contact@`).
+   - If none → `email: null, email_status: "manual_required"`. **NEVER invent.**
+3. **LinkedIn discovery by URL**: for each `(url, author_from_qualification)` of this domain:
+   - If step 4 already captured an author, WebFetch the specific article URL to retrieve the LinkedIn link from the author bio (if present).
+   - Otherwise WebSearch `"<author>" "<domain>" site:linkedin.com/in/`.
+   - If ambiguous/none → `linkedin_url: null, linkedin_status: "manual_required"`. **NEVER invent.**
+   - If no author at all: use the company LinkedIn page as a fallback (`linkedin.com/company/<slug>`), mark `profile_confidence: medium`.
 
-Output par sub-agent : JSON `{domain, email, email_source, email_confidence, urls: [{url, lang, author_name, linkedin_url, linkedin_headline, linkedin_confidence}, ...]}`.
+Output per sub-agent: JSON `{domain, email, email_source, email_confidence, urls: [{url, lang, author_name, linkedin_url, linkedin_headline, linkedin_confidence}, ...]}`.
 
-Lance les sub-agents **dans un seul message multi-tool-call** pour parallélisation maximale.
+Launch the sub-agents **in a single multi-tool-call message** for maximum parallelization.
 
-## Étape 6 — Génération email + DM (sub-agents Sonnet, un par source, routés par intent)
+## Step 6 — Email + DM generation (Sonnet sub-agents, one per source, routed by intent)
 
-Pour chaque source enrichie, lance **en parallèle** un sub-agent Sonnet. Le brief passé au sub-agent inclut :
-- Contexte projet : `projectName`, `projectUrl`, description courte du produit/service et USP / différenciateurs en 3 puces — **tirés de `value-proposition.md`** (`productContext`) quand il existe (étape 1), sinon déduits du site. Ne pas inventer de capacité hors périmètre.
-- Source : `domain`, `archetype`, `top_citing_url`, `lang`, `author_name`.
-- **Intent + evidence** : tout le bloc `evidence` de l'étape 4 (snippet de mention, liste de concurrents, titre listicle, entités topic).
-- Checklist anti-IA intégralement copiée depuis `CLAUDE.md` (em-dash interdits, vocabulaire banni FR + EN, pas de « Pas X, mais Y », pas d'ouverture cold email standard).
+For each enriched source, launch **in parallel** a Sonnet sub-agent. The brief passed to the sub-agent includes:
+- Project context: `projectName`, `projectUrl`, short description of the product/service and USPs / differentiators in 3 bullets — **taken from `value-proposition.md`** (`productContext`) when it exists (step 1), otherwise inferred from the site. Do not invent out-of-scope capabilities.
+- Source: `domain`, `archetype`, `top_citing_url`, `lang`, `author_name`.
+- **Intent + evidence**: the entire `evidence` block from step 4 (mention snippet, competitor list, listicle title, topic entities).
+- Anti-AI checklist copied in full from `CLAUDE.md` (em-dash forbidden, banned vocabulary FR + EN, no "Not X, but Y", no standard cold-email opener).
 
-Le sub-agent doit générer email + DM en utilisant **le template correspondant à l'intent** :
+The sub-agent must generate email + DM using **the template matching the intent**:
 
-### Template A — `direct_link_request` (mention sans lien)
+### Template A — `direct_link_request` (unlinked mention)
 
-**Email** (80-120 mots, ton direct, courtois, pas commercial) :
-1. Bonjour [auteur ou équipe].
-2. Phrase 1 : "Merci pour la mention de [marque] dans [titre article ou URL]." Cite la phrase exacte du snippet capturé (extrait court, entre guillemets).
-3. Phrase 2 : "Il manque probablement le lien vers [projectUrl] sur cette mention. Si vous pouvez l'ajouter, ça aidera vos lecteurs à nous trouver directement."
-4. Phrase 3 (optionnelle) : 1 ligne de remerciement ou contexte court.
-5. Signature : prénom + URL projet.
+**Email** (80-120 words, direct tone, courteous, not salesy):
+1. Hi [author or team].
+2. Sentence 1: "Thanks for mentioning [brand] in [article title or URL]." Quote the exact sentence from the captured snippet (short excerpt, in quotes).
+3. Sentence 2: "The link to [projectUrl] is probably missing on that mention. If you can add it, it will help your readers find us directly."
+4. Sentence 3 (optional): 1 line of thanks or short context.
+5. Signature: first name + project URL.
 
-Pas de pitch produit, pas de propal additionnelle. L'ask doit rester minuscule. Subject typique : "Petit lien manquant sur [titre article]" ou "Mention [marque] dans [titre] — lien à ajouter ?".
+No product pitch, no additional proposal. The ask must stay tiny. Typical subject: "Small missing link on [article title]" or "[brand] mention in [title] — link to add?".
 
-**DM LinkedIn** (40-70 mots, court, direct) :
-- Référence immédiate à l'article + mention.
-- Ask explicite : possible d'ajouter le lien ?
-- Aucun pitch produit, aucun lien sortant dans le DM.
+**LinkedIn DM** (40-70 words, short, direct):
+- Immediate reference to the article + mention.
+- Explicit ask: could you add the link?
+- No product pitch, no outbound link in the DM.
 
-### Template B — `listicle_inclusion` (liste les concurrents sans nous)
+### Template B — `listicle_inclusion` (lists the competitors without us)
 
-**Email** (150-200 mots, ton confraternel, donne tout pour faciliter l'ajout) :
-1. Bonjour [auteur].
-2. Référence précise à l'article + listicle_title. Reconnaissance courte de la qualité de la sélection (1 phrase, factuelle, pas flagorneuse).
-3. Observation : "Vous listez [competitor_1, competitor_2 (et éventuellement competitor_3)]. [Marque] n'est pas dans la sélection alors qu'elle fit la même catégorie."
-4. Différenciateur en 2-3 lignes : ce que la marque fait que ces concurrents ne font pas (basé sur les USP fournis dans le brief).
-5. **Blurb prêt à intégrer** (encadré ou listé) : 3-5 lignes formatées dans le style probable du listicle (titre du produit, tagline, 2-3 points clés, lien). Le sub-agent doit produire un blurb qui s'aligne sur le formatage des autres entrées si visible.
-6. CTA : "Si ça vous semble pertinent, j'ai préparé le blurb ci-dessus pour faciliter l'intégration. Heureux de répondre à toute question."
-7. Signature : prénom + URL projet.
+**Email** (150-200 words, peer tone, give everything to make the addition easy):
+1. Hi [author].
+2. Precise reference to the article + listicle_title. Short acknowledgment of the selection's quality (1 sentence, factual, not sycophantic).
+3. Observation: "You list [competitor_1, competitor_2 (and possibly competitor_3)]. [Brand] isn't in the selection, even though it fits the same category."
+4. Differentiator in 2-3 lines: what the brand does that these competitors don't (based on the USPs provided in the brief).
+5. **Ready-to-paste blurb** (boxed or listed): 3-5 lines formatted in the listicle's likely style (product title, tagline, 2-3 key points, link). The sub-agent must produce a blurb that aligns with the formatting of the other entries if visible.
+6. CTA: "If it seems relevant, I've prepared the blurb above to make integration easy. Happy to answer any questions."
+7. Signature: first name + project URL.
 
-Subject typique : "[Marque] manque dans votre top [N] [catégorie]" ou "Ajout possible à [titre listicle] ?".
+Typical subject: "[Brand] is missing from your top [N] [category]" or "Possible addition to [listicle title]?".
 
-**DM LinkedIn** (60-90 mots) :
-- Référence au listicle.
-- Mentionne les concurrents listés (1-2, pas tous).
-- Différenciateur en 1 phrase.
-- Question ouverte sur la possibilité d'ajout.
-- Pas le blurb complet (réservé à l'email).
+**LinkedIn DM** (60-90 words):
+- Reference to the listicle.
+- Mention the listed competitors (1-2, not all).
+- Differentiator in 1 sentence.
+- Open question about the possibility of adding it.
+- Not the full blurb (reserved for the email).
 
-### Template C — `guest_post` (couvre le sujet sans nous ni concurrents)
+### Template C — `guest_post` (covers the topic without us or the competitors)
 
-**Email** (200-300 mots, structure existante) :
-1. Accroche : référence à l'article (URL en clair), observation factuelle sur un point précis.
-2. Le signal : l'article couvre [topic_entities] sans aborder [angle complémentaire que la marque expertise].
-3. Proposition guest post : titre précis (1 ligne) + 2-3 lignes d'angle + 3 puces de plan.
-4. Pourquoi cette source / pourquoi maintenant : 1-2 phrases concrètes.
-5. CTA : "Si l'angle vous parle, je peux vous envoyer un outline détaillé."
-6. Signature : prénom + URL projet.
+**Email** (200-300 words, existing structure):
+1. Hook: reference to the article (URL in plain text), factual observation on a specific point.
+2. The signal: the article covers [topic_entities] without addressing [complementary angle the brand has expertise in].
+3. Guest post proposal: precise title (1 line) + 2-3 lines of angle + 3 outline bullets.
+4. Why this source / why now: 1-2 concrete sentences.
+5. CTA: "If the angle resonates, I can send you a detailed outline."
+6. Signature: first name + project URL.
 
-**DM LinkedIn** (60-90 mots) :
-- Conversationnel, ouverture sur l'article.
-- Mentionne un angle complémentaire.
-- Question ouverte.
-- Pas de CTA commercial.
+**LinkedIn DM** (60-90 words):
+- Conversational, opening on the article.
+- Mention a complementary angle.
+- Open question.
+- No sales CTA.
 
-### Règle universelle pour les trois templates
+### Universal rule for all three templates
 
-**Le DM doit être angulairement différent de l'email**, pas une version raccourcie. Le destinataire ne doit pas avoir l'impression de lire deux fois le même message.
+**The DM must be angularly different from the email**, not a shortened version. The recipient must not feel like they're reading the same message twice.
 
-**Tutoiement vs vouvoiement** : par défaut, tutoiement pour `blog_expert` et `newsletter` (norme entre indés/opérationnels), vouvoiement pour `media_vertical` (poli avec rédactions formelles), vouvoiement pour `comparateur`. Le sub-agent décide selon l'archétype + le ton perceptible de l'article cité.
+**Informal vs formal address (tu/vous, for French)**: by default, informal for `blog_expert` and `newsletter` (the norm between independents/operators), formal for `media_vertical` (polite with formal editorial teams), formal for `comparateur`. The sub-agent decides based on the archetype + the perceptible tone of the cited article.
 
-Output par sub-agent : JSON
+Output per sub-agent: JSON
 ```
 {
   "domain": "...",
@@ -234,51 +238,51 @@ Output par sub-agent : JSON
 
 ```
 Agent(
-  description: "Générer pitch <domain> intent=<intent>",
+  description: "Generate pitch <domain> intent=<intent>",
   subagent_type: "general-purpose",
   model: "sonnet",
-  prompt: <brief complet incluant intent + evidence + template correspondant + règles anti-IA>
+  prompt: <full brief including intent + evidence + matching template + anti-AI rules>
 )
 ```
 
-Tous les sub-agents lancés dans un seul message multi-tool-call.
+All sub-agents launched in a single multi-tool-call message.
 
-## Étape 7 — Lint anti-IA (sub-agent Haiku, un appel groupé)
+## Step 7 — Anti-AI lint (Haiku sub-agent, one batched call)
 
-Lance un **seul** sub-agent Haiku qui reçoit tous les emails + DMs générés (avec leur `intent` associé) et vérifie :
-- Zéro `—` (em-dash) dans body et subject.
-- Aucun mot de la liste bannie FR/EN.
-- Pas de « Pas X, mais Y » détecté.
-- Pas d'ouverture standard cold email.
-- Longueurs respectées **selon l'intent** :
-  - `direct_link_request` : email 80-120 mots, DM 40-70 mots
-  - `listicle_inclusion` : email 150-200 mots (hors blurb encadré), DM 60-90 mots
-  - `guest_post` : email 200-300 mots, DM 60-90 mots
+Launch a **single** Haiku sub-agent that receives all generated emails + DMs (with their associated `intent`) and checks:
+- Zero `—` (em-dash) in body and subject.
+- No word from the FR/EN banned list.
+- No "Not X, but Y" detected.
+- No standard cold-email opener.
+- Lengths respected **according to intent**:
+  - `direct_link_request`: email 80-120 words, DM 40-70 words
+  - `listicle_inclusion`: email 150-200 words (excluding the boxed blurb), DM 60-90 words
+  - `guest_post`: email 200-300 words, DM 60-90 words
 
-Output : JSON `[{domain, lint_status: "pass" | "fail", failures: [...]}, ...]`.
+Output: JSON `[{domain, lint_status: "pass" | "fail", failures: [...]}, ...]`.
 
-Pour les fails : relance un sub-agent Sonnet ciblé sur les messages concernés avec les failures listés, puis re-lint. Maximum 2 tours. Si toujours fail après 2 tours, marque la source `lint_status: "manual_review"` dans le livrable plutôt que de livrer un message douteux.
+For fails: relaunch a targeted Sonnet sub-agent on the affected messages with the listed failures, then re-lint. Maximum 2 rounds. If still failing after 2 rounds, mark the source `lint_status: "manual_review"` in the deliverable rather than shipping a questionable message.
 
-## Étape 8 — Écrire le livrable
+## Step 8 — Write the deliverable
 
-Crée le dossier `projects/<projectSlug>/outreach/<YYYY-MM-DD>/` avec :
+Create the `projects/<projectSlug>/outreach/<YYYY-MM-DD>/` folder with:
 
 ### `outreach-pitches.md` (index)
 
 ```markdown
-# Sources chaudes — [projectName]
+# Hot sources — [projectName]
 
-> Date : YYYY-MM-DD · Sources analysées : N · Qualifiées : M · Pitches générés : K
+> Date: YYYY-MM-DD · Sources analyzed: N · Qualified: M · Pitches generated: K
 
-## Répartition par intent (ROI décroissant)
+## Breakdown by intent (descending ROI)
 
-- **A. Lien direct** (mention sans lien, ask minimal) : Na
-- **B. Inclusion listicle** (cite concurrents, ajout demandé) : Nb
-- **C. Guest post** (couvre le sujet, propal article) : Nc
+- **A. Direct link** (unlinked mention, minimal ask): Na
+- **B. Listicle inclusion** (cites competitors, addition requested): Nb
+- **C. Guest post** (covers the topic, article proposal): Nc
 
-## Vue d'ensemble (triée par intent puis score, une ligne par URL pitchée)
+## Overview (sorted by intent then score, one line per pitched URL)
 
-| # | Intent | URL | Domaine | Score | Archétype | Email | LinkedIn | Lint |
+| # | Intent | URL | Domain | Score | Archetype | Email | LinkedIn | Lint |
 |---|---|---|---|---|---|---|---|---|
 | 1 | A | `/article-mention-marque` | blog-xyz.com | 5 | media_vertical | ✅ jean@blog-xyz.com | ✅ linkedin.com/in/jean-x | pass |
 | 2 | B | `/top-10-tools-ia` | comparateur.com | 5 | comparateur | ✅ ... | ✅ ... | pass |
@@ -286,34 +290,34 @@ Crée le dossier `projects/<projectSlug>/outreach/<YYYY-MM-DD>/` avec :
 | 4 | C | `/guide-geo-2026` | vlad-cerisier.fr | 5 | blog_expert | ✅ ... | ✅ ... | pass |
 ...
 
-**Note** : un même domaine peut apparaître plusieurs fois si plusieurs de ses pages ont des intents différents (ex : Vlad Cerisier ci-dessus a un listicle B et un guide C → deux pitches angulairement différents). Ne jamais répéter le MÊME intent pour le même domaine.
+**Note**: the same domain can appear multiple times if several of its pages have different intents (e.g. Vlad Cerisier above has a B listicle and a C guide → two angularly different pitches). Never repeat the SAME intent for the same domain.
 
-## Statistiques
+## Statistics
 
-- Email auto-trouvé : X/K
-- LinkedIn auto-trouvé : Y/K
-- Lint pass au premier coup : Z/K
-- À enrichir manuellement : W/K
+- Email auto-found: X/K
+- LinkedIn auto-found: Y/K
+- Lint pass on first try: Z/K
+- Needs manual enrichment: W/K
 
-## Sources exclues
+## Excluded sources
 
-- N sources avec score < 4 (raison : ...)
-- N podcasts exclus par règle
+- N sources with score < 4 (reason: ...)
+- N podcasts excluded by rule
 
-## Prochaines actions suggérées (par bucket d'intent)
+## Suggested next actions (by intent bucket)
 
-- **A — J0 (aujourd'hui)** : envoi des demandes de lien direct. Conversion attendue rapide (24-72h), effort destinataire minimal.
-- **B — J0 à J+2** : envoi des demandes d'inclusion listicle avec blurb prêt à intégrer. Conversion attendue 1-2 semaines.
-- **C — J+3** : envoi des propals guest post (cycle long, J+15-30 avant publication potentielle).
-- **J+3 pour A/B, J+7 pour C** : DM LinkedIn de relance sur les non-répondants.
-- **J+30** : vérification dans `list_llm_sources` si la marque commence à apparaître sur les domaines contactés.
+- **A — D0 (today)**: send the direct-link requests. Fast conversion expected (24-72h), minimal recipient effort.
+- **B — D0 to D+2**: send the listicle-inclusion requests with the ready-to-paste blurb. Conversion expected in 1-2 weeks.
+- **C — D+3**: send the guest-post proposals (long cycle, D+15-30 before potential publication).
+- **D+3 for A/B, D+7 for C**: LinkedIn DM follow-up on non-responders.
+- **D+30**: check in `list_llm_sources` whether the brand starts appearing on the contacted domains.
 ```
 
-### `pitches/<domain-slug>[--<intent>].md` (un fichier par URL pitchée)
+### `pitches/<domain-slug>[--<intent>].md` (one file per pitched URL)
 
-**Convention de nommage** :
-- Si un domaine n'a qu'un seul pitch : `pitches/<domain-slug>.md` (ex : `blog-xyz-com.md`).
-- Si un domaine a plusieurs pitches (intents différents) : suffix d'intent, ex `vlad-cerisier-fr--listicle.md` et `vlad-cerisier-fr--guest-post.md`. Suffixes autorisés : `--direct-link`, `--listicle`, `--guest-post`.
+**Naming convention**:
+- If a domain has only one pitch: `pitches/<domain-slug>.md` (e.g. `blog-xyz-com.md`).
+- If a domain has multiple pitches (different intents): intent suffix, e.g. `vlad-cerisier-fr--listicle.md` and `vlad-cerisier-fr--guest-post.md`. Allowed suffixes: `--direct-link`, `--listicle`, `--guest-post`.
 
 ```markdown
 ---
@@ -323,12 +327,12 @@ intent: direct_link_request | listicle_inclusion | guest_post
 intent_confidence: high | medium | low
 archetype: media_vertical
 detection_source: llm_sources + backlink_opportunities
-warm_signal: "Description courte de l'évidence détectée (mention sans lien / liste concurrents / topic seul)"
+warm_signal: "Short description of the detected evidence (unlinked mention / competitor list / topic only)"
 evidence:
-  brand_mention_snippet: "..." # rempli pour intent A
-  competitors_listed: [...]    # rempli pour intent B
-  listicle_title: "..."        # rempli pour intent B
-  topic_entities: [...]        # rempli pour intent C
+  brand_mention_snippet: "..." # filled for intent A
+  competitors_listed: [...]    # filled for intent B
+  listicle_title: "..."        # filled for intent B
+  topic_entities: [...]        # filled for intent C
 top_citing_url: https://...
 lang: fr
 lint_status: pass
@@ -337,54 +341,54 @@ email:
   to: jean.dupont@blog-xyz.com
   to_source: page /contact
   to_confidence: high
-  subject: "[sujet email]"
+  subject: "[email subject]"
 
 linkedin:
   profile_url: https://linkedin.com/in/jean-dupont
-  profile_source: bio auteur sur <top_citing_url>
+  profile_source: author bio on <top_citing_url>
   profile_confidence: high
-  headline: "Rédacteur en chef @ Blog XYZ"
+  headline: "Editor-in-chief @ Blog XYZ"
 ---
 
 ## Email
 
-**À :** jean.dupont@blog-xyz.com
-**Objet :** [sujet]
+**To:** jean.dupont@blog-xyz.com
+**Subject:** [subject]
 
-[corps email 200-300 mots]
+[email body 200-300 words]
 
-—
+---
 
-## DM LinkedIn
+## LinkedIn DM
 
-**Profil :** https://linkedin.com/in/jean-dupont
+**Profile:** https://linkedin.com/in/jean-dupont
 
-[DM 60-90 mots]
+[DM 60-90 words]
 ```
 
-**ATTENTION** : dans le rendu du fichier `pitches/*.md`, le séparateur entre les deux sections doit être une ligne `---` ASCII, **pas un em-dash**. Le caractère `—` ci-dessus est uniquement dans cette doc de skill, pas dans les fichiers livrables.
+**WARNING**: in the rendered `pitches/*.md` file, the separator between the two sections must be an ASCII `---` line, **not an em-dash**. The `—` character does not belong in the deliverable files.
 
-## Étape 9 — Rapport final à l'utilisateur
+## Step 9 — Final report to the user
 
-Une fois les fichiers écrits, affiche un résumé court :
-- Chemin du dossier livrable.
-- K pitches générés, dont X avec email + LinkedIn complets et prêts à envoyer.
-- Liste des sources nécessitant enrichissement manuel (email ou LinkedIn).
-- Suggestion : ouvrir d'abord `outreach-pitches.md` pour vue d'ensemble.
+Once the files are written, show a short summary:
+- Path of the deliverable folder.
+- K pitches generated, of which X with complete email + LinkedIn, ready to send.
+- List of sources needing manual enrichment (email or LinkedIn).
+- Suggestion: open `outreach-pitches.md` first for the overview.
 
-## Règles strictes
+## Strict rules
 
-- **Approche URL-first par défaut.** On raisonne au niveau page, pas domaine. Le domain-first est un fallback dégénéré (quand l'API renvoie peu d'URLs distinctes).
-- **Jamais inventer un email ou une URL LinkedIn.** Si non trouvé → `manual_required`.
-- **Jamais inventer une evidence d'intent.** Si le sub-agent qualification n'a pas trouvé de mention de la marque ou de listicle clair → l'intent est `guest_post` par défaut. Ne jamais classer en A ou B sans evidence textuelle capturée.
-- **Jamais inventer la liste des outils d'un listicle.** Si la page n'est pas fetchable (HTTP 403/508/paywall), marque la source en `manual_review` plutôt qu'inférer depuis le slug.
-- **Anti-cache enrichissement** : enrichir une seule fois par domaine, même si plusieurs URLs du domaine sont pitchées (économie tokens).
-- **Jamais d'em-dash** dans les fichiers `pitches/*.md` (ni dans subject, body email, body DM).
-- **Langue = langue de l'article cité**, fallback FR.
-- **Plafond strict** : `--limit` (défaut 10). Pas de génération de masse, c'est de la prospection ciblée pas du spam.
-- **Podcasts exclus**.
-- **Sources avec score < 4 exclues** du livrable final (mentionnées dans les "exclues" de l'index).
-- **Priorité de tri** : intent A > B > C, puis score décroissant à l'intérieur de chaque bucket.
-- **Coût** : utiliser Haiku pour parsing/scraping/lint, Sonnet pour qualification/rédaction, Opus uniquement pour orchestration. Ne pas appeler Opus dans les sub-agents.
-- **Parallélisation** : étapes 5 et 6 lancent N sub-agents en parallèle dans un seul message multi-tool-call.
-- **Pas d'engagement** : on parle de "sources chaudes potentielles", pas de "leads garantis".
+- **URL-first approach by default.** We reason at the page level, not the domain. Domain-first is a degenerate fallback (when the API returns few distinct URLs).
+- **Never invent an email or a LinkedIn URL.** If not found → `manual_required`.
+- **Never invent intent evidence.** If the qualification sub-agent found no brand mention or clear listicle → the intent defaults to `guest_post`. Never classify as A or B without captured textual evidence.
+- **Never invent the list of tools in a listicle.** If the page isn't fetchable (HTTP 403/508/paywall), mark the source as `manual_review` rather than inferring from the slug.
+- **Enrichment anti-cache**: enrich only once per domain, even if several URLs from the domain are pitched (token savings).
+- **Never an em-dash** in the `pitches/*.md` files (nor in subject, email body, DM body).
+- **Language = language of the cited article**, fallback FR.
+- **Strict cap**: `--limit` (default 10). No mass generation, this is targeted outreach not spam.
+- **Podcasts excluded**.
+- **Sources with score < 4 excluded** from the final deliverable (mentioned in the index's "excluded" section).
+- **Sort priority**: intent A > B > C, then score descending within each bucket.
+- **Cost**: use Haiku for parsing/scraping/lint, Sonnet for qualification/writing, Opus only for orchestration. Do not call Opus in the sub-agents.
+- **Parallelization**: steps 5 and 6 launch N sub-agents in parallel in a single multi-tool-call message.
+- **No guarantees**: we talk about "potential hot sources", not "guaranteed leads".

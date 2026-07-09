@@ -1,105 +1,109 @@
 ---
-description: Reverse engineering d'un concurrent — quels canaux le poussent dans les LLMs
-argument-hint: [nom-du-concurrent]
+description: Reverse engineering of a competitor — which channels push it into LLMs
+argument-hint: [competitor-name]
 ---
 
-Tu es un consultant GEO senior. Tu dois faire un **reverse engineering complet d'un concurrent** : comprendre par quels canaux il gagne en visibilité dans les LLMs, et en sortir une liste de cibles outreach actionnables.
+You are a senior GEO consultant. You must perform a **complete reverse engineering of a competitor**: understand through which channels it gains visibility in LLMs, and produce a list of actionable outreach targets.
 
-Argument fourni : `$ARGUMENTS` (nom du concurrent attendu)
+## Output language
 
-Si `$ARGUMENTS` est vide, demande à l'utilisateur quel concurrent analyser. Tu peux d'abord appeler `list_competitors(projectId, filters: { status: ["CONFIRMED"] }, sortBy: "mentions_desc", limit: 10)` pour proposer le top 10.
+Produce everything the end user reads (the report's headings and prose) in the project's language, read from `language` in `projects/<projectSlug>/.project.json` (default `en` when the field or file is absent). Templates in this command are written in English; if the project language is not English, write all prose in that language while keeping command names, tool names, code, and data identifiers unchanged.
 
-## Étape 1 — Identifier projet et concurrent
+Argument provided: `$ARGUMENTS` (competitor name expected)
 
-1. `list_projects()` — si plusieurs projets, demande lequel
-2. `list_competitors(projectId, filters: { nameContains: "$ARGUMENTS", status: ["CONFIRMED", "SUGGESTED"] })` — trouve le concurrent
-3. Si plusieurs matches, demande à l'utilisateur de choisir
-4. Note `competitorId`, `name`, `mentions`, et la liste des LLMs où il apparaît
+If `$ARGUMENTS` is empty, ask the user which competitor to analyze. You can first call `list_competitors(projectId, filters: { status: ["CONFIRMED"] }, sortBy: "mentions_desc", limit: 10)` to propose the top 10.
 
-## Étape 2 — Cartographier ses sources
+## Step 1 — Identify project and competitor
+
+1. `list_projects()` — if there are several projects, ask which one
+2. `list_competitors(projectId, filters: { nameContains: "$ARGUMENTS", status: ["CONFIRMED", "SUGGESTED"] })` — find the competitor
+3. If there are several matches, ask the user to choose
+4. Note `competitorId`, `name`, `mentions`, and the list of LLMs where it appears
+
+## Step 2 — Map its sources
 
 `list_competitor_sources(projectId, competitorId, limit: 50, sortBy: "mentions_desc")`
 
-Tu obtiens la liste des domaines qui le citent, avec :
-- nombre de mentions par domaine
-- LLMs qui consomment ce domaine
-- top URLs précises où il est mentionné
-- échantillons de contexte
+You get the list of domains that cite it, with:
+- number of mentions per domain
+- LLMs that consume this domain
+- top precise URLs where it is mentioned
+- context samples
 
-## Étape 3 — Comparer avec notre écosystème
+## Step 3 — Compare with our ecosystem
 
 `list_llm_sources(projectId, limit: 100, sortBy: "appearances_desc")`
 
-Pour chaque domaine qui cite le concurrent, vérifie s'il apparaît dans notre écosystème (LLM sources globales). Cela permet de classer chaque domaine en :
+For each domain that cites the competitor, check whether it appears in our ecosystem (global LLM sources). This lets you classify each domain as:
 
-- **Avantage exclusif** : le domaine cite le concurrent et **pas** notre écosystème → cible outreach prioritaire
-- **Terrain commun** : le domaine apparaît dans les deux → on peut peut-être renforcer notre présence
-- **Signal isolé** : 1-2 mentions seulement → ignorer
+- **Exclusive advantage**: the domain cites the competitor and **not** our ecosystem → priority outreach target
+- **Common ground**: the domain appears in both → we may be able to strengthen our presence
+- **Isolated signal**: only 1-2 mentions → ignore
 
-## Étape 4 — Détecter les patterns d'acquisition
+## Step 4 — Detect acquisition patterns
 
-Analyse les types de domaines qui dominent :
-- **Médias sectoriels** (.com éditoriaux) → relations presse / contenu sponsorisé
-- **Comparateurs** (g2.com, capterra.com, getapp.com…) → reviews et profils
+Analyze the types of domains that dominate:
+- **Industry media** (editorial .com sites) → PR / sponsored content
+- **Comparison sites** (g2.com, capterra.com, getapp.com…) → reviews and profiles
 - **Reddit / forums** → community / inbound
-- **Annuaires** (producthunt, alternativeto…) → listings
-- **Doc / blog du concurrent lui-même** → SEO on-site
-- **Wikipedia, sites institutionnels** → notoriété long terme
+- **Directories** (producthunt, alternativeto…) → listings
+- **Competitor's own docs / blog** → on-site SEO
+- **Wikipedia, institutional sites** → long-term reputation
 
-## Étape 5 — Produire la carte d'acquisition
+## Step 5 — Produce the acquisition map
 
-Format markdown ci-dessous :
+Markdown format below:
 
 ---
 
-# Reverse engineering — [Nom du concurrent]
+# Reverse engineering — [Competitor name]
 
-**Mentions totales** : N · **LLMs où il apparaît** : [liste] · **Statut** : CONFIRMED/SUGGESTED
+**Total mentions**: N · **LLMs where it appears**: [list] · **Status**: CONFIRMED/SUGGESTED
 
-## 1. Vue d'ensemble
+## 1. Overview
 
-- Domaines qui le citent (top 50) : N
-- Type dominant de canal : [comparateurs / médias / Reddit / autre]
-- Force perçue : [leader / challenger / niche]
+- Domains that cite it (top 50): N
+- Dominant channel type: [comparison sites / media / Reddit / other]
+- Perceived strength: [leader / challenger / niche]
 
-## 2. Top 10 domaines qui le citent
+## 2. Top 10 domains that cite it
 
-| Domaine | Mentions | LLMs | Type | Position vs nous |
+| Domain | Mentions | LLMs | Type | Position vs us |
 |---|---|---|---|---|
 
-`Type` = média sectoriel / comparateur / Reddit / annuaire / doc concurrent / autre.
-`Position vs nous` = "Avantage exclusif" si non présent dans nos sources, "Terrain commun" sinon.
+`Type` = industry media / comparison site / Reddit / directory / competitor docs / other.
+`Position vs us` = "Exclusive advantage" if not present in our sources, "Common ground" otherwise.
 
-## 3. Top URLs précises
+## 3. Top precise URLs
 
-Liste des URLs spécifiques (extraites de `topUrls`) où le concurrent est mentionné, regroupées par domaine. Format :
+List of specific URLs (extracted from `topUrls`) where the competitor is mentioned, grouped by domain. Format:
 
 - **domain.com**
-  - `https://domain.com/url-1` — contexte : [extrait court]
-  - `https://domain.com/url-2` — contexte : [extrait court]
+  - `https://domain.com/url-1` — context: [short excerpt]
+  - `https://domain.com/url-2` — context: [short excerpt]
 
-Limite-toi aux 5-10 URLs les plus citées.
+Limit yourself to the 5-10 most cited URLs.
 
-## 4. Pattern d'acquisition (synthèse)
+## 4. Acquisition pattern (synthesis)
 
-3-5 bullets factuels sur **comment** ce concurrent gagne en visibilité GEO. Exemples :
+3-5 factual bullets on **how** this competitor gains GEO visibility. Examples:
 
-- "Capitalise massivement sur les comparateurs (40% des mentions sur G2 + Capterra)"
-- "Présence Reddit organique sur r/[subreddit] avec X threads cités"
-- "5 articles de [media-sectoriel].com le mentionnent comme leader"
+- "Relies heavily on comparison sites (40% of mentions on G2 + Capterra)"
+- "Organic Reddit presence on r/[subreddit] with X cited threads"
+- "5 articles from [industry-media].com mention it as a leader"
 
-## 5. 3 cibles outreach prioritaires
+## 5. 3 priority outreach targets
 
-Format : **Domaine — Pourquoi (mentions concurrent + nous absent) — Angle d'approche**
+Format: **Domain — Why (competitor mentions + we're absent) — Approach angle**
 
-Choisis 3 domaines en priorité dans la colonne "Avantage exclusif", avec impact maximal (mentions élevées) et accessibilité (médias éditoriaux > comparateurs > forums).
+Choose 3 domains, prioritizing the "Exclusive advantage" column, with maximum impact (high mentions) and accessibility (editorial media > comparison sites > forums).
 
 ---
 
-## Règles strictes
+## Strict rules
 
-- **Pas d'analyse spéculative** : si un domaine est cité 1-2 fois, ne pas en faire un canal stratégique
-- **Distinguer "Avantage exclusif" vs "Terrain commun"** : c'est le cœur de la valeur de cette commande
-- **Sortie actionnable** : la dernière section doit donner 3 cibles concrètes à attaquer cette semaine
-- **Aucun jugement de qualité** sur le concurrent — on décrit ses canaux, pas son produit
-- **Tone exec** : factuel, sans superlatifs, sans emojis
+- **No speculative analysis**: if a domain is cited 1-2 times, don't turn it into a strategic channel
+- **Distinguish "Exclusive advantage" vs "Common ground"**: this is the core value of this command
+- **Actionable output**: the last section must give 3 concrete targets to attack this week
+- **No quality judgment** on the competitor — describe its channels, not its product
+- **Exec tone**: factual, no superlatives, no emojis

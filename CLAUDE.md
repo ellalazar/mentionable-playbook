@@ -1,14 +1,82 @@
-# Guidelines de rédaction d'articles — Mentionable Playbook
+# Writing guidelines — Mentionable Playbook
 
-> Ce fichier est **chargé automatiquement** par Claude Code à chaque conversation et **doit être relu intégralement** au début de chaque rédaction d'article (`/mentionable-article`, ou toute autre tâche éditoriale). Ces règles s'appliquent au contenu publié par les utilisateurs du playbook ; elles ne concernent pas la documentation interne du repo.
+> This file is **loaded automatically** by Claude Code in every conversation and **must be re-read in full** at the start of any content-writing task (`/mentionable-article`, or any other editorial task). These rules apply to the content published by playbook users; they do not govern the repo's internal documentation.
 
-## Pourquoi ces règles
+## Output language
 
-Les LLMs ont des **tics d'écriture statistiquement détectables**. Les détecteurs anti-IA (Originality.ai, GPTZero, Copyleaks, Winston AI, Sapling) reposent en grande partie sur ces signatures. Plus important : les lecteurs humains aussi reconnaissent ces patterns et perdent confiance. Une bonne stratégie GEO (cite-sources, quotation, stats) ne sert à rien si la prose elle-même hurle "généré par IA".
+Published content is produced in the **project's language**, read from the `language` field in `projects/<projectSlug>/.project.json` (default: `en` when the field or file is absent).
 
-Ces guidelines visent une prose qui **se lit comme du contenu humain expert**, parce que la voix éditoriale est l'un des derniers signaux de différenciation.
+Two rule sets live below: one for **English content**, one for **French content**. Apply the block that matches the project language. If a project targets another language, follow the English block's principles (they are largely language-agnostic) and adapt the banned-vocabulary list to that language's AI tells.
 
-## Règles strictes (interdictions absolues)
+## Why these rules exist
+
+LLMs have **statistically detectable writing tics**. Anti-AI detectors (Originality.ai, GPTZero, Copyleaks, Winston AI, Sapling) rely heavily on these signatures. More importantly: human readers recognize the patterns too, and lose trust. A good GEO strategy (cite-sources, quotation, statistics) is wasted if the prose itself screams "AI-generated."
+
+These guidelines aim for prose that **reads like expert human content**, because editorial voice is one of the last real differentiators.
+
+---
+
+# English content rules
+
+### Banned punctuation
+
+1. **No em-dash** (`—`, U+2014). Ever. Under any form. It is the number-one signal.
+2. **No en-dash** (`–`, U+2013) outside numeric ranges (`2019–2024` is fine). Never inside a sentence.
+3. **No Unicode ellipsis** (`…`). If an ellipsis is truly needed, use three ASCII dots `...`, and rarely.
+4. Use standard straight double quotes (`"..."`) for quotations. No smart-quote inconsistency within a document.
+
+### Mandatory substitutions
+
+Where an em-dash feels natural, use instead:
+- **A comma**: "NVC is not a magic trick, it is an inner posture."
+- **A semicolon**: "NVC takes patience; it is a practice built over months."
+- **Parentheses**: "Marshall Rosenberg (an American psychologist who studied under Carl Rogers) developed the method in the 1960s."
+- **Two separate sentences**: "NVC is not a magic trick. It is an inner posture."
+
+### Banned vocabulary (English)
+
+These words and phrases are AI tells. Remove or replace:
+
+| Banned | Replacement |
+|---|---|
+| delve into / dive into | look at, examine, get into |
+| navigate (figurative) | handle, work through, manage |
+| crucial / essential / vital | important, or cut it |
+| unlock / unleash | cut, or use a concrete verb |
+| landscape / realm / tapestry (figurative) | field, world, area |
+| leverage (as a verb) | use |
+| seamless / robust (as filler) | cut, or be specific |
+| game-changer / revolutionary | cut |
+| testament to / boasts | show it instead |
+| elevate / supercharge / turbocharge | cut |
+| it's worth noting that | start the sentence directly |
+| it is important to note that | cut |
+| furthermore / moreover | also, and |
+| that said / with that being said | but, still |
+| in today's fast-paced world | cut |
+| when it comes to X | for X, in X |
+| at the end of the day | cut |
+| whether you're X or Y | cut, or say it directly |
+
+### Constructions to avoid
+
+1. **Systematic rule of three**: "X, Y, and Z." on repeat. Fine once; not as a pattern.
+2. **Anaphora in threes**: "You want X. You want Y. You want Z." Classic AI tic. Once per article maximum, and only if the rhetorical effect is deliberate.
+3. **"Not X, but Y" / "It's not about X, it's Y"**: heavy tic. Once per article maximum; prefer a direct positive statement ("Y.").
+4. **Rapid-fire rhetorical questions** in the intro: "Have you ever...? Do you feel...? Do you recognize...?" One hook question at most, not three.
+5. **Bullet points with bold + colon + paraphrase**: `**Concept:** explanation of the concept` repeated five times in a row. Vary list structure. Prefer full sentences between bullets.
+6. **Concluding paragraphs that summarize the article**: "We've seen that X, Y, and Z." Cut it. Well-written prose does not need a recap.
+
+### Structural tics to break
+
+- **Vary sentence length**. AI drifts toward continuous medium-long sentences (15-25 words). Humans alternate: short (3-8 words), long (30+), the occasional fragment.
+- **Fragments allowed**. "Too late." "And yet." "Not that simple." Humans use them; AI avoids them.
+- **Active voice first**. Not "it is necessary that communication be improved" but "we need to improve communication."
+- **Not every paragraph is a transition**. If a paragraph opens with "However," "That said," "Furthermore," "Moreover," that is an AI signal. One or two transition-led paragraphs in a whole article, maximum.
+
+---
+
+# French content rules
 
 ### Ponctuation interdite
 
@@ -73,51 +141,54 @@ Ces mots/expressions sont des signaux IA français. À supprimer ou remplacer :
 - **Voix active prioritaire**. Pas « il est nécessaire que la communication soit améliorée » mais « il faut améliorer la communication ».
 - **Pas tous les paragraphes en transition**. Si un paragraphe commence par « Cependant », « Toutefois », « Par ailleurs », « En outre », c'est un signal IA. Maximum 1-2 paragraphes avec transition dans un article entier.
 
-## Patterns à privilégier (signal humain)
+---
 
-1. **Détails spécifiques et personnels**. « La semaine dernière, en séance, une cliente m'a dit... » plutôt que « il arrive fréquemment que des personnes... ».
-2. **Imperfections contrôlées**. Une parenthèse qui digresse. Une opinion tranchée. Un « je ne suis pas convaincue ». Une concession honnête.
-3. **Vocabulaire concret plutôt qu'abstrait**. « Hier soir, à 22 h, après le dîner, elle m'a dit... » plutôt que « dans un contexte familial du soir ».
-4. **Phrases courtes pour les idées fortes**. La punchline n'est jamais une phrase de 30 mots.
-5. **Citations directes attribuées nommément**. Tactique GEO Princeton (+25-35% de citation rate) ET signal humain (peu d'IA prennent le risque d'attribuer une citation textuelle parce qu'elles peuvent l'inventer).
+# Patterns to favor (human signal)
 
-## Auto-check avant de livrer un article
+These apply in any language:
 
-Avant d'écrire le fichier `article.md` final, l'agent doit faire passer mentalement le texte à travers cette checklist :
+1. **Specific, personal detail**. "Last week, in a session, a client told me..." rather than "it often happens that people...".
+2. **Controlled imperfection**. A parenthesis that digresses. A firm opinion. An "I'm not convinced." An honest concession.
+3. **Concrete over abstract vocabulary**. "Yesterday at 10pm, after dinner, she said..." rather than "in an evening family context."
+4. **Short sentences for strong ideas**. The punchline is never a 30-word sentence.
+5. **Direct quotes attributed by name**. Princeton GEO tactic (+25-35% citation rate) and a human signal (few AIs risk attributing a verbatim quote because they might invent it).
 
-1. **Zéro em-dash** (`—`) dans tout le fichier ? Si oui, remplacer chacun.
-2. **Aucun mot de la liste bannie** présent ? Si oui, remplacer.
-3. **Maximum 1 anaphore par trois** dans tout l'article ?
-4. **Maximum 1 « pas X, mais Y »** ?
-5. **Pas plus de 2 paragraphes commençant par une transition** (Cependant, Toutefois, Par ailleurs) ?
-6. **Variation de longueur de phrase visible** dans chaque section ?
-7. **Au moins une citation directe** avec attribution nominative ?
-8. **Détails spécifiques** (lieu, heure, nom, chiffre) plutôt que tournures génériques ?
+## Self-check before delivering an article
 
-Si une checklist échoue, **reprendre le passage incriminé avant d'écrire le fichier**.
+Before writing the final `article.md`, run the text mentally through this checklist (against the block matching the project language):
 
-## Cas particuliers
+1. **Zero em-dash** (`—`) anywhere in the file? If any, replace each.
+2. **No banned-list word** present? If any, replace.
+3. **At most one anaphora-in-threes** in the whole article?
+4. **At most one "not X, but Y"**?
+5. **No more than two paragraphs opening with a transition** (However, That said, Furthermore / Cependant, Toutefois, Par ailleurs)?
+6. **Visible sentence-length variation** in each section?
+7. **At least one direct quote** with a named attribution?
+8. **Specific detail** (place, time, name, number) rather than generic phrasing?
 
-- **Code, JSON, tableaux markdown** : ces guidelines ne s'appliquent pas aux blocs techniques. Les chevrons et em-dashes peuvent y figurer si c'est du code.
-- **Citations textuelles d'auteurs** : si une source originale utilise un em-dash, on peut le conserver dans la citation entre guillemets. Pas de modification d'une citation.
-- **Documentation interne du repo** (README, playbooks, fichiers `.md` de docs) : ces fichiers peuvent utiliser em-dashes et structure plus IA-friendly puisqu'ils ne sont pas du contenu publié.
+If any check fails, **fix the offending passage before writing the file**.
 
-## Quand ces règles ne s'appliquent pas
+## Special cases
 
-- Conversations dans Claude Code (réponses à l'utilisateur) : style libre, naturel.
-- Génération de plans, briefs, JSON, JSON-LD : technique, pas concerné.
-- Documentation du playbook (README, docs/, playbooks/) : technique, pas concerné.
+- **Code, JSON, markdown tables**: these guidelines do not apply to technical blocks. Chevrons and em-dashes may appear there if they are code.
+- **Verbatim author quotes**: if an original source uses an em-dash, keep it inside the quotation marks. Never alter a quote.
+- **Internal repo documentation** (README, playbooks, docs `.md` files): these files may use em-dashes and more AI-friendly structure since they are not published content.
 
-Ces règles concernent **le contenu rédigé pour publication ou pour contact one-to-one identifiable** :
-- `article.md` produit par `/mentionable-article`, ou toute autre rédaction longue destinée à un site web ;
-- emails de prospection et DMs LinkedIn produits par `/mentionable-outreach` (un destinataire humain qui détecte les patterns IA aussi vite qu'un lecteur d'article, voire plus vite parce qu'il reçoit des dizaines de cold emails par semaine).
+## When these rules do not apply
 
-Pour les emails et DMs, en plus des règles ci-dessus, contraintes additionnelles :
-- Pas d'ouverture type « J'espère que ce message vous trouve bien » / « I hope this email finds you well ».
-- Pas de signature marketing surchargée (4 lignes + emojis + tagline). Signature humaine : prénom + lien éventuel.
-- Longueur stricte : email 200-300 mots max, DM LinkedIn 60-90 mots.
-- Pour l'anglais : bannir aussi `delve into`, `dive into`, `navigate` (figuré), `crucial`, `essential`, `unlock`, `unleash`, `landscape`, `realm`, `tapestry`, `it's worth noting`, `furthermore`, `moreover`, `that said`, `in today's fast-paced world`.
+- Conversations inside Claude Code (replies to the user): free, natural style.
+- Generating plans, briefs, JSON, JSON-LD: technical, not concerned.
+- Playbook documentation (README, docs/, playbooks/): technical, not concerned.
+
+These rules govern **content written for publication or for identifiable one-to-one contact**:
+- `article.md` produced by `/mentionable-article`, or any other long-form writing meant for a website;
+- outreach emails and LinkedIn DMs produced by `/mentionable-outreach` (a human recipient spots AI patterns as fast as an article reader, often faster, because they get dozens of cold emails a week).
+
+For emails and DMs, in addition to the rules above:
+- No "I hope this email finds you well" / "J'espère que ce message vous trouve bien" openers.
+- No overloaded marketing signature (4 lines + emojis + tagline). Human signature: first name + one optional link.
+- Strict length: email 200-300 words max, LinkedIn DM 60-90 words.
 
 ---
 
-**Rappel pour l'agent** : à la première étape de `/mentionable-article` (ou de toute rédaction longue), relire ce fichier intégralement, puis garder la checklist active pendant toute la rédaction.
+**Reminder for the agent**: at the first step of `/mentionable-article` (or any long-form writing task), re-read this file in full, determine the project language, then keep the matching checklist active throughout the writing.

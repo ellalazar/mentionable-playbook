@@ -1,225 +1,226 @@
 # Mentionable Playbook
 
-> Le playbook open-source pour faire du **GEO actionnable** depuis Claude Code, Cursor ou Claude Desktop. Du signal brut LLM jusqu'à l'article publié, en 5 commandes chaînables.
+> The open-source playbook for **actionable GEO** from Claude Code, Cursor or Claude Desktop. From raw LLM signal to published article, in 5 chainable commands.
 
-[Mentionable](https://mentionable.ai) est une plateforme de **GEO (Generative Engine Optimization)** : tracking, mesure et acquisition de visibilité dans les LLMs (ChatGPT, Perplexity, Gemini, Claude, Google AIO/AI Mode, Copilot, Grok).
+[Mentionable](https://mentionable.ai) is a **GEO (Generative Engine Optimization)** platform: tracking, measuring and building visibility inside LLMs (ChatGPT, Perplexity, Gemini, Claude, Google AIO/AI Mode, Copilot, Grok).
 
-Le **MCP Mentionable** expose ces données à un agent IA. Ce repo contient **12 slash commands** prêtes à l'emploi et leurs playbooks détaillés. Tout est scopé par projet client, persistant sur disque, et conçu pour s'enchaîner naturellement.
+The **Mentionable MCP** exposes this data to an AI agent. This repo ships **12 ready-to-use slash commands** and their detailed playbooks. Everything is scoped per client project, persisted to disk, and designed to chain together naturally.
 
-## Pour qui ?
+## Who is it for?
 
-- **Consultant SEO freelance** — auditer un nouveau client en 2 minutes, livrer un reporting hebdo automatisé, produire des piliers prêts à publier.
-- **SEO in-house** — monitorer la visibilité GEO de son entreprise, prioriser le contenu et les backlinks à partir du signal LLM réel.
-- **Agence SEO** — industrialiser le diagnostic et la production sur N clients, chacun rangé dans son dossier projet.
-- **Agence web** — proposer une offre GEO crédible sans construire l'outillage.
+- **Freelance SEO consultant** — audit a new client in 2 minutes, deliver an automated weekly report, produce publish-ready pillars.
+- **In-house SEO** — monitor your company's GEO visibility, prioritize content and backlinks from real LLM signal.
+- **SEO agency** — industrialize diagnosis and production across N clients, each filed in its own project folder.
+- **Web agency** — offer a credible GEO service without building the tooling yourself.
 
-## Use cases pratiques
+## Practical use cases
 
-### 1. Tu prends en charge un nouveau client SEO (3 jours)
-
-```
-Jour 1 — Diagnostic
-  /mentionable-audit                        → audit GEO exec-ready
-  /mentionable-sov                          → Share of Voice par LLM
-  /mentionable-reverse <concurrent>         → reverse engineering d'un dominant
-
-Jour 2 — Stratégie contenu
-  /mentionable-clusters                     → clusters thématiques des fan-outs
-  /mentionable-pillar "<seed top cluster>"  → plan pilier+satellites (DataForSEO + LLM)
-  /mentionable-content-gap                  → backlog éditorial complémentaire
-
-Jour 3 — Production
-  /mentionable-article <plan pilier>        → article complet GEO Princeton + JSON-LD
-  /mentionable-images <article>             → 4 visuels (cover + social + flat)
-```
-
-Livrables fournis au client : audit exec-ready, plan éditorial 10+ articles, premier article publiable. Tout est sous `projects/<client>/` prêt à backup.
-
-### 2. Tu veux produire 5 articles GEO-optimisés pour ton site
+### 1. You take on a new SEO client (3 days)
 
 ```
-/mentionable-clusters                       → choisis 5 clusters non couverts
+Day 1 — Diagnosis
+  /mentionable-audit                        → exec-ready GEO audit
+  /mentionable-sov                          → Share of Voice by LLM
+  /mentionable-reverse <competitor>         → reverse engineering a dominant player
+
+Day 2 — Content strategy
+  /mentionable-clusters                     → topic clusters from fan-outs
+  /mentionable-pillar "<top cluster seed>"  → pillar+satellites plan (DataForSEO + LLM)
+  /mentionable-content-gap                  → complementary editorial backlog
+
+Day 3 — Production
+  /mentionable-article <pillar plan>        → full Princeton GEO article + JSON-LD
+  /mentionable-images <article>             → 4 visuals (cover + social + flat)
+```
+
+Deliverables handed to the client: exec-ready audit, 10+ article editorial plan, first publishable article. Everything sits under `projects/<client>/`, ready to back up.
+
+### 2. You want to produce 5 GEO-optimized articles for your site
+
+```
+/mentionable-clusters                       → pick 5 uncovered clusters
 for cluster in top5:
   /mentionable-pillar "<seed>" --from-cluster <path>
   /mentionable-article <plan>
   /mentionable-images <article>
 ```
 
-Chaque article inclut TL;DR, FAQ, citations sourcées, statistiques, JSON-LD (`Article` + `FAQPage` + `BreadcrumbList`), audit trail des sources fetchées. Anti-détection IA appliquée automatiquement via [`CLAUDE.md`](CLAUDE.md).
+Each article includes a TL;DR, FAQ, sourced citations, statistics, JSON-LD (`Article` + `FAQPage` + `BreadcrumbList`), and an audit trail of the fetched sources. AI-detection avoidance is applied automatically via [`CLAUDE.md`](CLAUDE.md).
 
-### 3. Tu fais du reporting hebdo client
-
-```
-/mentionable-weekly                         → reporting hebdo automatisé
-/mentionable-reddit-triage                  → opportunités d'outreach Reddit
-/mentionable-backlinks                      → plan d'achat de backlinks priorisé
-```
-
-3 livrables exec-ready en 5 minutes, à envoyer en PDF ou Slack au client.
-
-### 4. Tu refresh la stratégie d'un client tous les 2 mois
+### 3. You do weekly client reporting
 
 ```
-/mentionable-clusters <projet>              → nouveau snapshot daté
+/mentionable-weekly                         → automated weekly report
+/mentionable-reddit-triage                  → Reddit outreach opportunities
+/mentionable-backlinks                      → prioritized backlink buying plan
+```
 
-L'historique daté sous `discovery/<date>/` te permet de tracker l'évolution des fan-outs LLM mois sur mois (nouveaux thèmes, hausse de fréquence, concurrents émergents).
+3 exec-ready deliverables in 5 minutes, ready to send to the client as a PDF or over Slack.
 
-## Démarrage rapide
+### 4. You refresh a client's strategy every 2 months
+
+```
+/mentionable-clusters <project>             → new dated snapshot
+```
+
+The dated history under `discovery/<date>/` lets you track how LLM fan-outs evolve month over month (new themes, rising frequency, emerging competitors).
+
+## Quick start
 
 ```bash
-# 1. Cloner le repo
+# 1. Clone the repo
 git clone https://github.com/mentionable-ai/mentionable-playbook.git
 cd mentionable-playbook
 
-# 2. Installer le MCP Mentionable (voir docs/getting-started.md)
+# 2. Install the Mentionable MCP (see docs/getting-started.md)
 
-# 3. Optionnel : npm install si tu veux DataForSEO (/mentionable-pillar) ou Gemini (/mentionable-images)
+# 3. Optional: npm install if you want DataForSEO (/mentionable-pillar) or Gemini (/mentionable-images)
 npm install
 
-# 4. Ouvrir le repo dans Claude Code et choisir ton point d'entrée :
-#    - Tu découvres un projet client :   /mentionable-audit
-#    - Tu veux produire du contenu :     /mentionable-clusters
+# 4. Open the repo in Claude Code and pick your entry point:
+#    - Getting to know a client project:  /mentionable-audit
+#    - You want to produce content:        /mentionable-clusters
 ```
 
-Si tu n'as pas Claude Code, chaque playbook contient le **prompt complet à copier-coller** dans Cursor, Claude Desktop ou tout autre client compatible MCP.
+If you don't have Claude Code, every playbook includes the **full copy-paste prompt** for Cursor, Claude Desktop or any other MCP-compatible client.
 
-## Les 12 commandes, par phase de workflow
+## The 12 commands, by workflow phase
 
-### 🔍 Diagnostic & analyse
+### 🔍 Diagnosis & analysis
 
-| #  | Commande                                                                       | Pour qui              | Livrable                                     |
-| -- | ------------------------------------------------------------------------------ | --------------------- | -------------------------------------------- |
-| 1  | [`/mentionable-audit`](.claude/commands/mentionable-audit.md)                  | Tous, jour 1          | Audit GEO complet exec-ready                 |
-| 2  | [`/mentionable-sov`](.claude/commands/mentionable-sov.md)                      | Consultant, agence    | Share of Voice par LLM + heatmap             |
-| 3  | [`/mentionable-reverse`](.claude/commands/mentionable-reverse.md)              | Tous                  | Reverse engineering d'un concurrent          |
-| 4  | [`/mentionable-content-gap`](.claude/commands/mentionable-content-gap.md)      | SEO content, in-house | Backlog éditorial issu des fan-outs          |
-| 5  | [`/mentionable-clusters`](.claude/commands/mentionable-clusters.md)            | SEO content, agence   | Clusters de fan-outs par thème + intent, passerelle vers `/mentionable-pillar` |
+| #  | Command                                                                        | For whom               | Deliverable                                  |
+| -- | ------------------------------------------------------------------------------ | ---------------------- | -------------------------------------------- |
+| 1  | [`/mentionable-audit`](.claude/commands/mentionable-audit.md)                  | Everyone, day 1        | Full exec-ready GEO audit                    |
+| 2  | [`/mentionable-sov`](.claude/commands/mentionable-sov.md)                      | Consultant, agency     | Share of Voice by LLM + heatmap              |
+| 3  | [`/mentionable-reverse`](.claude/commands/mentionable-reverse.md)              | Everyone               | Reverse engineering of a competitor          |
+| 4  | [`/mentionable-content-gap`](.claude/commands/mentionable-content-gap.md)      | SEO content, in-house  | Editorial backlog from fan-outs              |
+| 5  | [`/mentionable-clusters`](.claude/commands/mentionable-clusters.md)            | SEO content, agency    | Fan-out clusters by theme + intent, gateway to `/mentionable-pillar` |
 
-### ✍️ Production de contenu
+### ✍️ Content production
 
-| #  | Commande                                                                       | Pour qui              | Livrable                                     |
-| -- | ------------------------------------------------------------------------------ | --------------------- | -------------------------------------------- |
-| 6  | [`/mentionable-pillar`](.claude/commands/mentionable-pillar.md)                | SEO content, agence   | Plan pilier+satellites SEO+GEO (DataForSEO × LLM) |
-| 7  | [`/mentionable-brief`](.claude/commands/mentionable-brief.md)                  | Rédacteurs, content   | Brief d'article complet                      |
-| 8  | [`/mentionable-article`](.claude/commands/mentionable-article.md)              | Rédacteurs, content   | Article complet GEO-optimisé (Princeton) + JSON-LD |
-| 9  | [`/mentionable-images`](.claude/commands/mentionable-images.md)                | Content, rédacteurs   | 4 images d'article via Gemini (cover, social, flat) |
+| #  | Command                                                                        | For whom               | Deliverable                                  |
+| -- | ------------------------------------------------------------------------------ | ---------------------- | -------------------------------------------- |
+| 6  | [`/mentionable-pillar`](.claude/commands/mentionable-pillar.md)                | SEO content, agency    | SEO+GEO pillar+satellites plan (DataForSEO × LLM) |
+| 7  | [`/mentionable-brief`](.claude/commands/mentionable-brief.md)                  | Writers, content       | Full article brief                           |
+| 8  | [`/mentionable-article`](.claude/commands/mentionable-article.md)              | Writers, content       | Full GEO-optimized article (Princeton) + JSON-LD |
+| 9  | [`/mentionable-images`](.claude/commands/mentionable-images.md)                | Content, writers       | 4 article images via Gemini (cover, social, flat) |
 
 ### 🔗 Outreach & link building
 
-| #  | Commande                                                                       | Pour qui              | Livrable                                     |
-| -- | ------------------------------------------------------------------------------ | --------------------- | -------------------------------------------- |
-| 10 | [`/mentionable-reddit-triage`](.claude/commands/mentionable-reddit-triage.md)  | Community, growth     | Triage hebdo des opportunités Reddit         |
-| 11 | [`/mentionable-backlinks`](.claude/commands/mentionable-backlinks.md)          | Link builder, agence  | Plan d'achat de backlinks priorisé           |
+| #  | Command                                                                        | For whom               | Deliverable                                  |
+| -- | ------------------------------------------------------------------------------ | ---------------------- | -------------------------------------------- |
+| 10 | [`/mentionable-reddit-triage`](.claude/commands/mentionable-reddit-triage.md)  | Community, growth      | Weekly triage of Reddit opportunities        |
+| 11 | [`/mentionable-backlinks`](.claude/commands/mentionable-backlinks.md)          | Link builder, agency   | Prioritized backlink buying plan             |
 
 ### 📊 Reporting
 
-| #  | Commande                                                                       | Pour qui              | Livrable                                     |
-| -- | ------------------------------------------------------------------------------ | --------------------- | -------------------------------------------- |
-| 12 | [`/mentionable-weekly`](.claude/commands/mentionable-weekly.md)                | Consultant, freelance | Reporting hebdo client                       |
+| #  | Command                                                                        | For whom               | Deliverable                                  |
+| -- | ------------------------------------------------------------------------------ | ---------------------- | -------------------------------------------- |
+| 12 | [`/mentionable-weekly`](.claude/commands/mentionable-weekly.md)                | Consultant, freelance  | Weekly client report                         |
 
-Chaque commande a son **playbook .md équivalent** dans [`playbooks/`](playbooks/) avec contexte, prompt brut, exemple de livrable et variantes.
+Each command has its **equivalent .md playbook** in [`playbooks/`](playbooks/) with context, raw prompt, sample deliverable and variants.
 
-## Workflow complet : du signal LLM à l'article publié
+## Full workflow: from LLM signal to published article
 
 ```
-/mentionable-clusters <projet>
-       ↓ projects/<projet>/discovery/<date>/clusters.json (seeds prêts, daté)
+/mentionable-clusters <project>
+       ↓ projects/<project>/discovery/<date>/clusters.json (seeds ready, dated)
        ↓
-       ↓ choisir un cluster
+       ↓ pick a cluster
        ↓
 /mentionable-pillar "<seed>" --from-cluster <path>
-       ↓ projects/<projet>/pillars/<seed>/plan.md (pilier + N satellites SEO×GEO)
+       ↓ projects/<project>/pillars/<seed>/plan.md (pillar + N SEO×GEO satellites)
        ↓
-/mentionable-brief "<titre>"  [optionnel, pour briefer un rédacteur humain]
+/mentionable-brief "<title>"  [optional, to brief a human writer]
        ↓
 /mentionable-article <path>
-       ↓ projects/<projet>/articles/<slug>/article.md (+ jsonld.json + sources.json + meta.json)
+       ↓ projects/<project>/articles/<slug>/article.md (+ jsonld.json + sources.json + meta.json)
        ↓
 /mentionable-images <article>
-       ↓ projects/<projet>/articles/<slug>/images/{1-cover, 2-3-illustration, 4-illustration-flat}.png
+       ↓ projects/<project>/articles/<slug>/images/{1-cover, 2-3-illustration, 4-illustration-flat}.png
        ↓
 [publication]
 ```
 
-Le pipeline est **modulaire** : chaque étape produit un fichier réutilisable, chacune peut être relancée indépendamment, et tout est tracé dans le filesystem sous `projects/<projet>/`.
+The pipeline is **modular**: each step produces a reusable file, each can be re-run independently, and everything is traced in the filesystem under `projects/<project>/`.
 
-## Garanties qualité intégrées
+## Built-in quality guarantees
 
-Ce repo n'est pas juste un set de prompts. Il intègre 4 mécanismes qui rendent la production fiable et auditable :
+This repo isn't just a set of prompts. It builds in 4 mechanisms that make production reliable and auditable:
 
-1. **Tactiques GEO validées par la recherche académique** — `/mentionable-article` applique les 4 tactiques mesurées par l'étude Princeton ["GEO: Generative Engine Optimization"](https://arxiv.org/abs/2311.09735) (Aggarwal et al., KDD 2024) : `Cite_Sources` (+30-40%), `Quotation_Addition` (+25-35%), `Statistics_Addition` (+25-30%), `Fluency_Optimization` (+15-25%). Compteurs affichés dans le résumé final.
+1. **GEO tactics validated by academic research** — `/mentionable-article` applies the 4 tactics measured by the Princeton study ["GEO: Generative Engine Optimization"](https://arxiv.org/abs/2311.09735) (Aggarwal et al., KDD 2024): `Cite_Sources` (+30-40%), `Quotation_Addition` (+25-35%), `Statistics_Addition` (+25-30%), `Fluency_Optimization` (+15-25%). Counters shown in the final summary.
 
-2. **Anti-détection IA stricte** — [`CLAUDE.md`](CLAUDE.md) est chargé automatiquement à chaque conversation : em-dashes interdits, ~25 mots/expressions IA-typiques bannis, patterns détectables (anaphores triples, "pas X mais Y" en rafale) plafonnés. Check QA bloquant avant écriture de l'article.
+2. **Strict AI-detection avoidance** — [`CLAUDE.md`](CLAUDE.md) loads automatically in every conversation: em-dashes banned, ~25 AI-typical words/phrases blacklisted, detectable patterns (triple anaphora, "not X but Y" in bursts) capped. Blocking QA check before the article is written.
 
-3. **Anti-hallucination par sources fetchées** — `/mentionable-article` lance 3-5 `WebFetch` en parallèle sur les sources d'autorité du brief pour extraire stats et quotes réelles. Le fichier `sources.json` garde l'audit trail des URLs effectivement utilisées.
+3. **Anti-hallucination via fetched sources** — `/mentionable-article` fires 3-5 parallel `WebFetch` calls on the brief's authority sources to pull real stats and quotes. The `sources.json` file keeps the audit trail of the URLs actually used.
 
-4. **Cross-signal SERP × LLM** — `/mentionable-pillar` croise DataForSEO (volume Google, top 10 SERP, KD) avec le MCP Mentionable (fan-outs LLM par cluster, concurrents trackés, sources d'autorité LLM) pour distinguer les vrais doubles signaux des opportunités SERP-only ou GEO-only.
+4. **SERP × LLM cross-signal** — `/mentionable-pillar` crosses DataForSEO (Google volume, top 10 SERP, KD) with the Mentionable MCP (LLM fan-outs per cluster, tracked competitors, LLM authority sources) to tell genuine double signals apart from SERP-only or GEO-only opportunities.
 
-## Convention projets Mentionable
+## Mentionable project convention
 
-Tous les livrables sont scopés par projet Mentionable sous `projects/<projet-slug>/` (slug dérivé du nom récupéré via le MCP). Un fichier `.project.json` au niveau projet stocke `projectId` + `projectName` pour que les commandes downstream retrouvent le projet sans re-demander.
+All deliverables are scoped per Mentionable project under `projects/<project-slug>/` (slug derived from the name fetched via the MCP). A `.project.json` file at the project level stores `projectId` + `projectName` so downstream commands find the project again without asking twice. It also holds a `language` field (default `en`) that sets the language of every deliverable the command produces (report, article, brief, outreach); set it to `fr` or another language code per client.
 
-Un fichier **`value-proposition.md`** (optionnel mais recommandé) au niveau projet sert de **source de vérité produit** : one-liner, problème résolu, USP / différenciateurs, ICP / personas, concurrents nommés, bénéfices, périmètre honnête. Quand il est présent, les commandes de contenu le lisent pour contextualiser leur sortie : `/mentionable-article` (cadrage ICP, mention produit + CTA, cohérence terminologique), `/mentionable-brief` (angles différenciants, signal GEO), `/mentionable-pillar` (priorisation des satellites par fit ICP), `/mentionable-content-gap` (multiplicateur de fit produit au scoring) et `/mentionable-outreach` (description produit + USP des messages). S'il est absent, chaque commande continue normalement et le signale.
+A **`value-proposition.md`** file (optional but recommended) at the project level acts as the **product source of truth**: one-liner, problem solved, USP / differentiators, ICP / personas, named competitors, benefits, honest scope. When present, the content commands read it to contextualize their output: `/mentionable-article` (ICP framing, product mention + CTA, terminology consistency), `/mentionable-brief` (differentiating angles, GEO signal), `/mentionable-pillar` (satellite prioritization by ICP fit), `/mentionable-content-gap` (product-fit multiplier in scoring) and `/mentionable-outreach` (product description + USP in messages). When absent, each command carries on normally and says so.
 
 ```
 projects/
-└── mon-client/
+└── my-client/
     ├── .project.json
-    ├── value-proposition.md  ← source de vérité produit (optionnel, lu par les commandes de contenu)
-    ├── editorial-calendar.json ← planning daté (publishDate → frontmatter date:), généré par scripts/editorial-calendar.mjs
-    ├── editorial-calendar.md   ← calendrier lisible
+    ├── value-proposition.md  ← product source of truth (optional, read by content commands)
+    ├── editorial-calendar.json ← dated schedule (publishDate → frontmatter date:), generated by scripts/editorial-calendar.mjs
+    ├── editorial-calendar.md   ← readable calendar
     ├── discovery/
     │   └── 2026-05-11/
-    │       ├── clusters.json     ← seeds prêts, machine-readable
-    │       ├── clusters.md       ← rapport human-readable
-    │       ├── coverage-gap.md   ← thèmes non couverts = backlog futur
+    │       ├── clusters.json     ← seeds ready, machine-readable
+    │       ├── clusters.md       ← human-readable report
+    │       ├── coverage-gap.md   ← uncovered themes = future backlog
     │       └── fan-outs-raw.json ← audit trail
     ├── pillars/
     │   └── communication-non-violente/
-    │       ├── brief.json        ← output DataForSEO
-    │       └── plan.md           ← plan pilier+satellites
+    │       ├── brief.json        ← DataForSEO output
+    │       └── plan.md           ← pillar+satellites plan
     └── articles/
         └── cnv-au-travail/
-            ├── article.md        ← frontmatter + corps GEO
+            ├── article.md        ← frontmatter + GEO body
             ├── jsonld.json       ← Article + FAQPage + BreadcrumbList
-            ├── sources.json      ← audit trail des citations
+            ├── sources.json      ← citation audit trail
             ├── meta.json         ← wordCount, h2Count, …
             └── images/
                 └── 1-cover.png
 ```
 
-Le dossier `projects/` est **gitignoré par défaut** (contenu client confidentiel). Pour un usage agence multi-clients, chaque sous-dossier est trivial à backup/share/transmettre isolément (`tar czf mon-client.tar.gz projects/mon-client/`).
+The `projects/` folder is **gitignored by default** (confidential client content). For multi-client agency use, each subfolder is trivial to back up/share/hand off in isolation (`tar czf my-client.tar.gz projects/my-client/`).
 
-## Pré-requis selon les commandes
+## Requirements per command
 
-| Commande | Pré-requis | Coût indicatif |
+| Command | Requirements | Indicative cost |
 |---|---|---|
-| `/mentionable-audit`, `-sov`, `-reverse`, `-content-gap`, `-clusters`, `-brief`, `-reddit-triage`, `-backlinks`, `-weekly` | MCP Mentionable installé | Gratuit (juste des calls MCP) |
-| `/mentionable-pillar` | + Node ≥ 18 + compte [DataForSEO](https://app.dataforseo.com) (1 $ offert) | ~0.05-0.15 $ par run |
-| `/mentionable-article` | + accès web (WebFetch) | Gratuit côté API tiers |
-| `/mentionable-images` | + Node ≥ 18 + clé [Google Gemini](https://aistudio.google.com/apikey) (billing activé) | ~0.04-0.20 $ pour 4 images |
+| `/mentionable-audit`, `-sov`, `-reverse`, `-content-gap`, `-clusters`, `-brief`, `-reddit-triage`, `-backlinks`, `-weekly` | Mentionable MCP installed | Free (just MCP calls) |
+| `/mentionable-pillar` | + Node ≥ 18 + [DataForSEO](https://app.dataforseo.com) account ($1 free) | ~$0.05-0.15 per run |
+| `/mentionable-article` | + web access (WebFetch) | Free on the third-party API side |
+| `/mentionable-images` | + Node ≥ 18 + [Google Gemini](https://aistudio.google.com/apikey) key (billing enabled) | ~$0.04-0.20 for 4 images |
 
-Setup détaillé : [docs/getting-started.md](docs/getting-started.md) · [docs/dataforseo-setup.md](docs/dataforseo-setup.md) · [docs/images-setup.md](docs/images-setup.md) · [docs/gemini-api-key.md](docs/gemini-api-key.md).
+Detailed setup: [docs/getting-started.md](docs/getting-started.md) · [docs/dataforseo-setup.md](docs/dataforseo-setup.md) · [docs/images-setup.md](docs/images-setup.md) · [docs/gemini-api-key.md](docs/gemini-api-key.md).
 
 ## Documentation
 
-- [Getting started](docs/getting-started.md) — installer le MCP, créer un projet, premiers appels
-- [Concepts GEO](docs/concepts.md) — fan-outs, citations, Share of Voice, vocabulaire
-- [Tools reference](docs/tools-reference.md) — cheatsheet des 12 tools MCP
-- [Images setup](docs/images-setup.md) — configurer Gemini pour `/mentionable-images`
-- [Créer une clé Gemini avec billing](docs/gemini-api-key.md) — walkthrough AI Studio / GCP Console
-- [DataForSEO setup](docs/dataforseo-setup.md) — configurer DataForSEO pour `/mentionable-pillar`
-- [CLAUDE.md](CLAUDE.md) — guidelines de style anti-détection IA (chargé automatiquement)
+- [Getting started](docs/getting-started.md) — install the MCP, create a project, first calls
+- [GEO concepts](docs/concepts.md) — fan-outs, citations, Share of Voice, vocabulary
+- [Tools reference](docs/tools-reference.md) — cheatsheet of the 12 MCP tools
+- [Images setup](docs/images-setup.md) — configure Gemini for `/mentionable-images`
+- [Create a Gemini key with billing](docs/gemini-api-key.md) — AI Studio / GCP Console walkthrough
+- [DataForSEO setup](docs/dataforseo-setup.md) — configure DataForSEO for `/mentionable-pillar`
+- [CLAUDE.md](CLAUDE.md) — anti-AI-detection style guidelines (loaded automatically)
 
-## Contribuer
+## Contributing
 
-Tu as un workflow GEO qui marche bien chez tes clients ? Ouvre une PR.
-Voir [CONTRIBUTING.md](CONTRIBUTING.md).
+Got a GEO workflow that works well with your clients? Open a PR.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Licence
+## License
 
-MIT — utilise, fork, adapte chez tes clients sans restriction.
+MIT — use, fork and adapt it for your clients without restriction.
 
 ---
 
-**Maintenu par** [Mentionable](https://mentionable.ai)
+**Maintained by** [Mentionable](https://mentionable.ai)

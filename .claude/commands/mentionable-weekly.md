@@ -1,106 +1,110 @@
 ---
-description: Reporting hebdo client GEO — évolutions, nouveaux signaux, top 3 actions
-argument-hint: [nom-du-projet]
+description: Weekly GEO client report — changes, new signals, top 3 actions
+argument-hint: [project-name]
 ---
 
-Tu es un consultant GEO senior. Tu dois produire un **reporting hebdomadaire client**, court et exec, qui rend compte de la semaine écoulée et fixe les 3 actions de la semaine suivante.
+You are a senior GEO consultant. You must produce a **weekly client report**, short and exec, that reports on the past week and sets the 3 actions for the following week.
 
-Argument fourni : `$ARGUMENTS` (vide si non précisé)
+## Output language
 
-## Étape 1 — Identifier le projet et la période
+Produce everything the end user reads (the report's headings and prose) in the project's language, read from `language` in `projects/<projectSlug>/.project.json` (default `en` when the field or file is absent). Templates in this command are written in English; if the project language is not English, write all prose in that language while keeping command names, tool names, code, and data identifiers unchanged.
 
-- `list_projects()` ou avec filtre nom si `$ARGUMENTS` rempli
-- Période d'analyse : **7 derniers jours** (semaine en cours -1)
-- Période de comparaison : **7 jours précédents** (semaine -2)
+Argument provided: `$ARGUMENTS` (empty if not specified)
 
-## Étape 2 — Collecter les signaux des 7 derniers jours (en parallèle)
+## Step 1 — Identify the project and the period
 
-1. `list_prompts(projectId, limit: 100)` — état courant des prompts
+- `list_projects()` or with a name filter if `$ARGUMENTS` is filled
+- Analysis period: **last 7 days** (the week just ended)
+- Comparison period: **previous 7 days** (the week before)
+
+## Step 2 — Collect the signals from the last 7 days (in parallel)
+
+1. `list_prompts(projectId, limit: 100)` — current state of the prompts
 2. `list_competitors(projectId, filters: { status: ["CONFIRMED"] }, limit: 20, sortBy: "mentions_desc")`
-3. `list_llm_sources(projectId, limit: 50, filters: { dateRange: { from: "<J-7>", to: "<aujourd'hui>" } }, sortBy: "appearances_desc")`
-4. `list_fan_outs(projectId, limit: 50, sortBy: "recent")` — fan-outs récents
+3. `list_llm_sources(projectId, limit: 50, filters: { dateRange: { from: "<D-7>", to: "<today>" } }, sortBy: "appearances_desc")`
+4. `list_fan_outs(projectId, limit: 50, sortBy: "recent")` — recent fan-outs
 
-## Étape 3 — Détecter les évolutions
+## Step 3 — Detect the changes
 
-Pour le reporting hebdo, il faut quelque chose de comparatif. Si l'API ne fournit pas directement les snapshots historiques, tu peux :
-- Demander à l'utilisateur s'il a un reporting de la semaine précédente à fournir en contexte
-- Sinon, faire un état des lieux ponctuel + alerting basé sur les `recent` flags
+For the weekly report, we need something comparative. If the API doesn't directly provide historical snapshots, you can:
+- Ask the user whether they have a previous week's report to provide as context
+- Otherwise, do a point-in-time snapshot + alerting based on the `recent` flags
 
-Évolutions à surveiller :
-- **Concurrents** : nouveaux statuts SUGGESTED apparus, mentions en hausse/baisse
-- **Sources** : nouveaux domaines détectés (premier appearance dans la fenêtre)
-- **Fan-outs** : nouveaux fan-outs détectés (premier `firstSeen` dans la fenêtre)
-- **Prompts** : visibilité par LLM en hausse/baisse
+Changes to watch:
+- **Competitors**: new SUGGESTED statuses that appeared, mentions up/down
+- **Sources**: new domains detected (first appearance in the window)
+- **Fan-outs**: new fan-outs detected (first `firstSeen` in the window)
+- **Prompts**: visibility per LLM up/down
 
-## Étape 4 — Produire le reporting
+## Step 4 — Produce the report
 
 ---
 
-# Reporting GEO — [Nom du projet]
+# GEO Report — [Project name]
 
-> Semaine du [J-7] au [aujourd'hui]
+> Week of [D-7] to [today]
 
-## TL;DR (3 lignes)
+## TL;DR (3 lines)
 
-3 lignes maximum :
-- L'évolution principale (positive ou négative)
-- L'alerte la plus importante (si applicable)
-- L'action prioritaire de la semaine prochaine
+3 lines maximum:
+- The main change (positive or negative)
+- The most important alert (if applicable)
+- The priority action for next week
 
-## 1. Visibilité globale
+## 1. Overall visibility
 
-- **Prompts trackés** : N (vs N semaine précédente)
-- **Taux de visibilité moyen** : X% (Δ vs S-1 si dispo)
-- **LLMs où on apparaît** : ChatGPT (X%), Perplexity (X%), Gemini (X%), …
+- **Tracked prompts**: N (vs N previous week)
+- **Average visibility rate**: X% (Δ vs W-1 if available)
+- **LLMs where we appear**: ChatGPT (X%), Perplexity (X%), Gemini (X%), …
 
 ## 2. Share of Voice — top 5
 
-| Concurrent | Mentions S | Δ vs S-1 | Posture |
+| Competitor | Mentions W | Δ vs W-1 | Posture |
 |---|---|---|---|
 
-(Inclure la marque du projet en gras et `(nous)`)
+(Include the project's brand in bold and `(us)`)
 
-## 3. Nouveaux signaux de la semaine
+## 3. New signals of the week
 
-### Nouveaux fan-outs détectés
+### New fan-outs detected
 
-Liste 5-10 fan-outs apparus pour la première fois cette semaine (firstSeen ≥ J-7) :
+List 5-10 fan-outs that appeared for the first time this week (firstSeen ≥ D-7):
 
-| Fan-out | Fréquence | LLMs | Couvert ? |
+| Fan-out | Frequency | LLMs | Covered? |
 |---|---|---|---|
 
-### Nouveaux domaines dans l'écosystème
+### New domains in the ecosystem
 
-Liste 5 domaines dont c'est la première apparition cette semaine :
+List 5 domains whose first appearance is this week:
 
-| Domaine | Apparitions | Type |
+| Domain | Appearances | Type |
 |---|---|---|
 
-### Nouveaux concurrents suggérés
+### Newly suggested competitors
 
-Liste les concurrents passés en `SUGGESTED` cette semaine (à valider) :
+List the competitors that moved to `SUGGESTED` this week (to validate):
 
-| Concurrent | Mentions | À traiter |
+| Competitor | Mentions | To handle |
 |---|---|---|
 
-## 4. Actions menées la semaine
+## 4. Actions taken this week
 
-Si l'utilisateur fournit un contexte de ce qui a été fait (publications, achats, commentaires Reddit) → l'inclure ici. Sinon, section omise.
+If the user provides context on what was done (publications, purchases, Reddit comments) → include it here. Otherwise, omit this section.
 
-## 5. Top 3 actions semaine prochaine
+## 5. Top 3 actions for next week
 
-Priorisées par impact / faisabilité, formatées :
+Prioritized by impact / feasibility, formatted:
 
-1. **Action courte** — pourquoi (1 ligne) — comment (slash command) — propriétaire si pertinent
-2. **Action courte** — ...
-3. **Action courte** — ...
+1. **Short action** — why (1 line) — how (slash command) — owner if relevant
+2. **Short action** — ...
+3. **Short action** — ...
 
 ---
 
-## Règles strictes
+## Strict rules
 
-- **Format max 1 page imprimée** : le reporting doit tenir lu en 2 minutes
-- **Pas d'invention de Δ** : si pas de comparaison possible, écrire "première semaine de tracking" ou "comparaison non disponible"
-- **TL;DR en haut, toujours** : un client lit la première ligne, pas le reste
-- **Tone exec** : factuel, pas de jargon, pas de superlatifs, pas d'emojis
-- **Format markdown** : envoyable par email tel quel
+- **Max 1 printed page**: the report must be readable in 2 minutes
+- **No fabricating Δ**: if no comparison is possible, write "first week of tracking" or "comparison not available"
+- **TL;DR at the top, always**: a client reads the first line, not the rest
+- **Exec tone**: factual, no jargon, no superlatives, no emojis
+- **Markdown format**: sendable by email as-is

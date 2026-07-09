@@ -1,93 +1,97 @@
 ---
-description: Audit GEO complet d'un projet Mentionable, exec-ready, en 2 minutes
-argument-hint: [nom-du-projet]
+description: Complete GEO audit of a Mentionable project, exec-ready, in 2 minutes
+argument-hint: [project-name]
 ---
 
-Tu es un consultant GEO senior. Tu dois produire un **audit GEO exec-ready** d'un projet Mentionable, prêt à être envoyé à un client.
+You are a senior GEO consultant. You must produce an **exec-ready GEO audit** of a Mentionable project, ready to send to a client.
 
-Argument fourni : `$ARGUMENTS` (vide si non précisé)
+## Output language
 
-## Étape 1 — Identifier le projet
+Produce everything the end user reads (the report's headings and prose) in the project's language, read from `language` in `projects/<projectSlug>/.project.json` (default `en` when the field or file is absent). Templates in this command are written in English; if the project language is not English, write all prose in that language while keeping command names, tool names, code, and data identifiers unchanged.
 
-- Si `$ARGUMENTS` est rempli : `list_projects(filters: { nameContains: "$ARGUMENTS" })`
-- Sinon : `list_projects()`. S'il n'y a qu'un projet, prends-le. S'il y en a plusieurs, demande à l'utilisateur lequel.
-- Note `projectId` et `name`.
+Argument provided: `$ARGUMENTS` (empty if not specified)
 
-## Étape 2 — Collecter les signaux (en parallèle)
+## Step 1 — Identify the project
 
-Lance **simultanément** ces 4 appels :
+- If `$ARGUMENTS` is filled: `list_projects(filters: { nameContains: "$ARGUMENTS" })`
+- Otherwise: `list_projects()`. If there is only one project, take it. If there are several, ask the user which one.
+- Note the `projectId` and `name`.
 
-1. `list_prompts(projectId, limit: 100)` — comprendre les prompts trackés et leur visibilité par LLM
-2. `list_competitors(projectId, limit: 20, filters: { status: ["CONFIRMED"] }, sortBy: "mentions_desc")` — top concurrents par Share of Voice
-3. `list_llm_sources(projectId, limit: 50, sortBy: "appearances_desc")` — top domaines de l'écosystème
-4. `list_fan_outs(projectId, limit: 30, sortBy: "frequency")` — top requêtes derrière les réponses LLM
+## Step 2 — Collect the signals (in parallel)
 
-Si un appel renvoie un set vide, note-le mais continue les autres.
+Run these 4 calls **simultaneously**:
 
-## Étape 3 — Produire le rapport
+1. `list_prompts(projectId, limit: 100)` — understand the tracked prompts and their visibility per LLM
+2. `list_competitors(projectId, limit: 20, filters: { status: ["CONFIRMED"] }, sortBy: "mentions_desc")` — top competitors by Share of Voice
+3. `list_llm_sources(projectId, limit: 50, sortBy: "appearances_desc")` — top domains in the ecosystem
+4. `list_fan_outs(projectId, limit: 30, sortBy: "frequency")` — top queries behind the LLM answers
 
-Format markdown ci-dessous. **Pas de prose inutile** — tableaux, bullets, chiffres.
+If a call returns an empty set, note it but continue with the others.
+
+## Step 3 — Produce the report
+
+Markdown format below. **No filler prose** — tables, bullets, numbers.
 
 ---
 
-# Audit GEO — [nom du projet]
+# GEO Audit — [project name]
 
-> Période d'analyse : [détecter via dateRange si possible, sinon écrire "tracking en cours"]
+> Analysis period: [detect via dateRange if possible, otherwise write "tracking in progress"]
 
-## 1. Vue d'ensemble
+## 1. Overview
 
-- **Prompts trackés** : N (dont N actifs)
-- **Concurrents confirmés** : N
-- **LLMs couverts** : [liste détectée à partir des données]
-- **Domaines détectés dans l'écosystème** : N+
+- **Tracked prompts**: N (of which N active)
+- **Confirmed competitors**: N
+- **LLMs covered**: [list detected from the data]
+- **Domains detected in the ecosystem**: N+
 
-## 2. Visibilité par LLM
+## 2. Visibility per LLM
 
-Pour chaque LLM présent dans les données, calcule le taux de visibilité moyen sur les prompts trackés.
+For each LLM present in the data, compute the average visibility rate across the tracked prompts.
 
-| LLM | Prompts couverts | Taux de visibilité moyen | Note |
+| LLM | Prompts covered | Average visibility rate | Note |
 |---|---|---|---|
 
-Note : "fort" si > 50%, "moyen" si 20-50%, "faible" si < 20%, "absent" si 0%.
+Note: "strong" if > 50%, "medium" if 20-50%, "weak" if < 20%, "absent" if 0%.
 
-## 3. Share of Voice — Top 5 concurrents
+## 3. Share of Voice — Top 5 competitors
 
-| Concurrent | Mentions totales | LLMs où il apparaît | Statut |
+| Competitor | Total mentions | LLMs where it appears | Status |
 |---|---|---|---|
 
-Si la marque du projet apparaît également dans les concurrents (auto-référencement), inclus-la et marque-la `(nous)` pour donner le repère.
+If the project's own brand also appears among the competitors (self-reference), include it and mark it `(us)` to give the reference point.
 
 ## 4. Top 10 fan-outs
 
-Top fan-outs par fréquence. Pour chacun, indique si la marque apparaît sur le prompt parent ("couvert") ou pas ("à travailler").
+Top fan-outs by frequency. For each, indicate whether the brand appears on the parent prompt ("covered") or not ("to work on").
 
-| Fan-out | Fréquence | LLMs concernés | Statut |
+| Fan-out | Frequency | LLMs involved | Status |
 |---|---|---|---|
 
-## 5. Top 10 sources de l'écosystème
+## 5. Top 10 ecosystem sources
 
-| Domaine | Apparitions | Type dominant (cited/consulted/fan_out) |
+| Domain | Appearances | Dominant type (cited/consulted/fan_out) |
 |---|---|---|
 
-## 6. 3 actions prioritaires
+## 6. 3 priority actions
 
-Format : **Action — Pourquoi — Comment l'exécuter**.
+Format: **Action — Why — How to execute it**.
 
-Choisis 3 actions parmi :
-- "Travailler le LLM X" si visibility < 20% sur ce LLM → `/mentionable-sov`
-- "Reverse engineering du concurrent X" si X domine la SoV → `/mentionable-reverse <X>`
-- "Combler les fan-outs non couverts" → `/mentionable-content-gap`
-- "Acheter des backlinks ciblés" si les sources concurrents sont accessibles → `/mentionable-backlinks`
-- "Travailler Reddit" si beaucoup de threads Reddit dans les sources → `/mentionable-reddit-triage`
+Choose 3 actions among:
+- "Work on LLM X" if visibility < 20% on that LLM → `/mentionable-sov`
+- "Reverse engineer competitor X" if X dominates the SoV → `/mentionable-reverse <X>`
+- "Fill the uncovered fan-outs" → `/mentionable-content-gap`
+- "Buy targeted backlinks" if the competitors' sources are accessible → `/mentionable-backlinks`
+- "Work on Reddit" if there are many Reddit threads in the sources → `/mentionable-reddit-triage`
 
-Priorise par **impact perçu × faisabilité**.
+Prioritize by **perceived impact × feasibility**.
 
 ---
 
-## Règles strictes
+## Strict rules
 
-- **Données uniquement** : zéro invention. Si un signal manque, écris explicitement "non disponible".
-- **Format compact** : tableaux markdown, pas de paragraphes inutiles.
-- **Sortie copy-paste ready** : un consultant doit pouvoir l'envoyer à son client sans retouche.
-- **Tone exec** : factuel, sans superlatifs, sans emojis.
-- **Aucun jugement** sur les concurrents — on décrit ce que les LLMs voient, pas la qualité du concurrent.
+- **Data only**: zero invention. If a signal is missing, write "not available" explicitly.
+- **Compact format**: markdown tables, no filler paragraphs.
+- **Copy-paste ready output**: a consultant must be able to send it to their client with no edits.
+- **Exec tone**: factual, no superlatives, no emojis.
+- **No judgment** about the competitors — describe what the LLMs see, not the competitor's quality.

@@ -1,166 +1,166 @@
-# Tools reference — MCP Mentionable
+# Tools reference — Mentionable MCP
 
-Cheatsheet des 12 tools exposés par le MCP. Pour chaque tool : à quoi il sert, ses inputs clés, et dans quel(s) playbook(s) il est utilisé.
+Cheatsheet of the 12 tools exposed by the MCP. For each tool: what it's for, its key inputs, and which playbook(s) it's used in.
 
-## Découverte
+## Discovery
 
 ### `list_projects`
 
-Liste les projets accessibles avec la clé API courante.
+Lists the projects accessible with the current API key.
 
-| Input | Optionnel | Note |
+| Input | Optional | Note |
 |---|---|---|
-| `filters.nameContains` | Oui | Recherche par nom partiel |
-| `sortBy` | Oui | `recent` (défaut), `oldest`, `alphabetical` |
-| `limit`, `cursor` | Oui | Pagination, max 100 |
+| `filters.nameContains` | Yes | Search by partial name |
+| `sortBy` | Yes | `recent` (default), `oldest`, `alphabetical` |
+| `limit`, `cursor` | Yes | Pagination, max 100 |
 
-**Utilisé dans** : tous les playbooks (point d'entrée).
+**Used in**: every playbook (entry point).
 
 ### `list_prompts`
 
-Liste les prompts trackés d'un projet, avec stats de mention et **visibilité par LLM**.
+Lists a project's tracked prompts, with mention stats and **visibility per LLM**.
 
 | Input | Note |
 |---|---|
-| `projectId` | Requis |
-| `filters.categoryIds`, `filters.personaIds` | Filtrage segmenté |
-| `filters.country` | Code ISO 2 lettres |
-| `filters.isActive`, `filters.textContains` | Filtres complémentaires |
+| `projectId` | Required |
+| `filters.categoryIds`, `filters.personaIds` | Segmented filtering |
+| `filters.country` | ISO 2-letter code |
+| `filters.isActive`, `filters.textContains` | Additional filters |
 
-**Utilisé dans** : `audit`, `sov`, `weekly`, `content-gap`.
+**Used in**: `audit`, `sov`, `weekly`, `content-gap`.
 
-## Mesure GEO
+## GEO measurement
 
 ### `list_competitors`
 
-Concurrents trackés avec mentions totales et présence par LLM (Share of Voice).
+Tracked competitors with total mentions and presence per LLM (Share of Voice).
 
 | Input | Note |
 |---|---|
 | `filters.status` | `CONFIRMED`, `SUGGESTED`, `REJECTED` |
-| `sortBy` | `mentions_desc` (défaut), `recent`, `alphabetical` |
-| `filters.minMentions` | Filtrer le bruit |
+| `sortBy` | `mentions_desc` (default), `recent`, `alphabetical` |
+| `filters.minMentions` | Filter out noise |
 
-**Utilisé dans** : `audit`, `sov`, `reverse`, `weekly`.
+**Used in**: `audit`, `sov`, `reverse`, `weekly`.
 
 ### `list_llm_sources`
 
-Domaines apparaissant dans les réponses LLM (cités, consultés, fan-out).
+Domains appearing in LLM answers (cited, consulted, fan-out).
 
 | Input | Note |
 |---|---|
 | `filters.appearanceTypes` | `cited`, `consulted`, `fan_out` |
-| `filters.llms` | Filtrer par LLM (ChatGPT, Perplexity, etc.) |
-| `filters.dateRange` | Période d'analyse |
+| `filters.llms` | Filter by LLM (ChatGPT, Perplexity, etc.) |
+| `filters.dateRange` | Analysis period |
 | `sortBy` | `appearances_desc`, `cited_desc`, `fan_out_desc`, `recent` |
 
-**Utilisé dans** : `audit`, `reverse`, `backlinks`, `content-gap`.
+**Used in**: `audit`, `reverse`, `backlinks`, `content-gap`.
 
 ## Reverse engineering
 
 ### `list_competitor_sources`
 
-Pour un concurrent donné, les domaines qui le citent dans les LLMs (avec top URLs et contexte d'exemple).
+For a given competitor, the domains that cite it in LLMs (with top URLs and example context).
 
 | Input | Note |
 |---|---|
-| `competitorId` | Requis |
-| `filters.minMentions` | Filtrer le bruit |
-| `sortBy` | `mentions_desc` (défaut), `recent` |
+| `competitorId` | Required |
+| `filters.minMentions` | Filter out noise |
+| `sortBy` | `mentions_desc` (default), `recent` |
 
-**Utilisé dans** : `reverse`, `backlinks` (cibles outreach).
+**Used in**: `reverse`, `backlinks` (outreach targets).
 
 ### `list_fan_outs`
 
-Les requêtes que les LLMs lancent en coulisses pour répondre aux prompts trackés. Dédupliquées, classées par fréquence.
+The queries LLMs run behind the scenes to answer the tracked prompts. Deduplicated, ranked by frequency.
 
 | Input | Note |
 |---|---|
-| `filters.search` | Recherche textuelle |
-| `filters.promptId` | Fan-outs d'un prompt précis |
-| `filters.llm` | Par LLM |
-| `sortBy` | `frequency` (défaut), `recent` |
+| `filters.search` | Text search |
+| `filters.promptId` | Fan-outs for a specific prompt |
+| `filters.llm` | By LLM |
+| `sortBy` | `frequency` (default), `recent` |
 
-**Utilisé dans** : `audit`, `content-gap`, `brief`.
+**Used in**: `audit`, `content-gap`, `brief`.
 
-## Reddit (workflow GEO)
+## Reddit (GEO workflow)
 
 ### `list_reddit_threads`
 
-Threads Reddit cités par les LLMs avec signaux GEO (citations, web searches, LLMs touchés) + contenu scrapé si enrichi.
+Reddit threads cited by LLMs with GEO signals (citations, web searches, LLMs touched) + scraped content if enriched.
 
 | Input | Note |
 |---|---|
 | `filters.status` | `NEW`, `ENRICHING`, `ENRICHED`, `COMMENTED`, `SKIPPED`, `DELETED` |
-| `filters.subredditContains` | Cibler un subreddit |
-| `filters.enrichedOnly` | Ne garder que les threads avec contenu scrapé |
+| `filters.subredditContains` | Target a subreddit |
+| `filters.enrichedOnly` | Keep only threads with scraped content |
 | `sortBy` | `score_desc`, `recent`, `citations_desc` |
 
-**Utilisé dans** : `reddit-triage`.
+**Used in**: `reddit-triage`.
 
 ### `enrich_reddit_thread`
 
-Lance le scraping Bright Data d'un thread Reddit (titre, body, top comments). **Charge des crédits AI**. Asynchrone (1-3 min).
+Kicks off the Bright Data scraping of a Reddit thread (title, body, top comments). **Charges AI credits**. Asynchronous (1-3 min).
 
 | Input | Note |
 |---|---|
-| `redditPostId` | Requis |
-| Idempotent | Re-call ne re-charge pas si déjà en cours |
+| `redditPostId` | Required |
+| Idempotent | Re-calling doesn't re-charge if already in progress |
 
-**Utilisé dans** : `reddit-triage`.
+**Used in**: `reddit-triage`.
 
 ### `get_reddit_thread`
 
-Polling d'un thread après `enrich_reddit_thread`. Retourne le statut courant + contenu scrapé si dispo.
+Polls a thread after `enrich_reddit_thread`. Returns the current status + scraped content if available.
 
-**Utilisé dans** : `reddit-triage`.
+**Used in**: `reddit-triage`.
 
 ### `bulk_update_reddit_thread_status`
 
-Mise à jour en bulk (max 50) du statut des threads. Statuts utilisateur : `NEW`, `COMMENTED`, `SKIPPED`.
+Bulk update (max 50) of thread status. User statuses: `NEW`, `COMMENTED`, `SKIPPED`.
 
-**Utilisé dans** : `reddit-triage`.
+**Used in**: `reddit-triage`.
 
 ## Acquisition
 
 ### `list_backlink_opportunities`
 
-Domaines où acheter un backlink pourrait améliorer la visibilité GEO, avec impact score et offres marketplace.
+Domains where buying a backlink could improve GEO visibility, with impact score and marketplace offers.
 
 | Input | Note |
 |---|---|
-| `filters.providers` | Filtrer par marketplace |
+| `filters.providers` | Filter by marketplace |
 | `filters.priceMin`, `filters.priceMax` | Budget |
-| `filters.minImpactScore` | Filtrer le faible impact |
-| `filters.hasOffer` | Ne garder que les domaines achetables |
+| `filters.minImpactScore` | Filter out low impact |
+| `filters.hasOffer` | Keep only buyable domains |
 | `sortBy` | `impact_score_desc`, `cheapest_offer`, `best_impact_price_ratio`, `recent` |
 
-**Utilisé dans** : `backlinks`.
+**Used in**: `backlinks`.
 
-## Hygiène / workflow
+## Hygiene / workflow
 
 ### `bulk_update_competitor_status`
 
-Mise à jour en bulk (max 50) du statut des concurrents : `CONFIRMED`, `REJECTED`, `SUGGESTED`.
+Bulk update (max 50) of competitor status: `CONFIRMED`, `REJECTED`, `SUGGESTED`.
 
-**Utilisé dans** : optionnel — peut être greffé dans `audit` ou un futur `competitor-triage`.
+**Used in**: optional — can be grafted into `audit` or a future `competitor-triage`.
 
-## Patterns d'utilisation
+## Usage patterns
 
 ### Pagination
 
-Tous les `list_*` supportent `cursor` + `limit`. Pour itérer :
+All `list_*` tools support `cursor` + `limit`. To iterate:
 
 ```
-1. Appel sans cursor → réponse contient `nextCursor`
-2. Appel avec cursor: <nextCursor> → page suivante
-3. Stop quand pas de `nextCursor` retourné
+1. Call without cursor → response contains `nextCursor`
+2. Call with cursor: <nextCursor> → next page
+3. Stop when no `nextCursor` is returned
 ```
 
-### Parallélisation
+### Parallelization
 
-Les appels MCP sur des tools différents sont **indépendants** : sur Claude Code, ils peuvent être lancés en parallèle dans le même tour pour gagner du temps (typiquement dans `audit` : 4 appels en parallèle).
+MCP calls on different tools are **independent**: on Claude Code, they can be fired in parallel within the same turn to save time (typically in `audit`: 4 calls in parallel).
 
-### Format CUID
+### CUID format
 
-Les `projectId`, `competitorId`, `redditPostId`, etc. sont au format **CUID** (commencent par `c`, ex: `clxyz1234abcd`). Si tu manipules ces IDs manuellement, vérifie le format.
+The `projectId`, `competitorId`, `redditPostId`, etc. are in **CUID** format (they start with `c`, e.g. `clxyz1234abcd`). If you handle these IDs manually, check the format.

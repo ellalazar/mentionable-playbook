@@ -1,92 +1,96 @@
 ---
-description: Clusterise les fan-outs LLM d'un projet par thème + intent, produit clusters.json consommable par /mentionable-pillar
-argument-hint: [project-slug-ou-path-optionnel]
+description: Clusters a project's LLM fan-outs by theme + intent, produces clusters.json consumable by /mentionable-pillar
+argument-hint: [optional-project-slug-or-path]
 allowed-tools: Read, Write, Bash, AskUserQuestion
 ---
 
-Tu es un analyste GEO. À partir des fan-outs LLM d'un projet Mentionable, tu produis un **catalogue de clusters thématiques** qui sert de passerelle entre le signal brut (fan-outs LLM) et la production de contenu (`/mentionable-pillar`, `/mentionable-brief`, `/mentionable-article`).
+You are a GEO analyst. From a Mentionable project's LLM fan-outs, you produce a **catalog of topic clusters** that bridges the raw signal (LLM fan-outs) and content production (`/mentionable-pillar`, `/mentionable-brief`, `/mentionable-article`).
 
-Objectif : un fichier `clusters.json` machine-readable consommable par les autres commandes, plus un `clusters.md` lisible par un humain pour décider quoi écrire en priorité.
+## Output language
 
-Argument fourni : `$ARGUMENTS` (project slug ou chemin sous `projects/<slug>/`, optionnel)
+Produce everything the end user reads (the deliverable's headings and prose) in the project's language, read from `language` in `projects/<projectSlug>/.project.json` (default `en` when the field or file is absent). Templates in this command are written in English; if the project language is not English, write all prose in that language while keeping command names, tool names, code, and data identifiers unchanged.
 
-## Étape 1 — Identifier le projet
+Goal: a machine-readable `clusters.json` file consumable by the other commands, plus a human-readable `clusters.md` to decide what to write first.
 
-1. **Si `$ARGUMENTS` est un slug ou un path sous `projects/<slug>/`** → extrais le `projectSlug`, lis `projects/<projectSlug>/.project.json` pour récupérer `projectId` et `projectName`.
-2. **Si `$ARGUMENTS` est vide** → `list_projects()`.
-   - Si un seul projet : utilise-le.
-   - Si plusieurs : `AskUserQuestion` pour faire choisir.
-   - Si zéro : indique de créer un projet sur app.mentionable.ai.
-3. Calcule `projectSlug` (kebab-case du nom, sans accents, max 60 char) si absent.
-4. Si `projects/<projectSlug>/.project.json` n'existe pas, crée-le.
+Argument provided: `$ARGUMENTS` (project slug or path under `projects/<slug>/`, optional)
 
-Stocke : `projectId`, `projectName`, `projectSlug`, `today` (`YYYY-MM-DD` ISO).
+## Step 1 — Identify the project
 
-## Étape 2 — Cache / idempotence
+1. **If `$ARGUMENTS` is a slug or a path under `projects/<slug>/`** → extract the `projectSlug`, read `projects/<projectSlug>/.project.json` to get `projectId` and `projectName`.
+2. **If `$ARGUMENTS` is empty** → `list_projects()`.
+   - If a single project: use it.
+   - If multiple: `AskUserQuestion` to let the user choose.
+   - If zero: tell them to create a project on app.mentionable.ai.
+3. Compute `projectSlug` (kebab-case of the name, no accents, max 60 chars) if absent.
+4. If `projects/<projectSlug>/.project.json` does not exist, create it.
 
-Vérifie si `projects/<projectSlug>/discovery/<today>/clusters.json` existe déjà.
+Store: `projectId`, `projectName`, `projectSlug`, `today` (`YYYY-MM-DD` ISO).
 
-- **S'il existe** → `AskUserQuestion` : "Snapshot du jour déjà présent. Relancer la collecte (consomme N appels MCP) ou repartir du cache existant ?"
-  - Si "repartir du cache" → saute les étapes 3-7 et passe directement à l'affichage console (étape 8) en lisant les fichiers existants.
-  - Si "relancer" → continue normalement, **écrase** les fichiers existants.
-- **S'il n'existe pas** → continue normalement.
+## Step 2 — Cache / idempotence
 
-## Étape 3 — Collecte des fan-outs
+Check whether `projects/<projectSlug>/discovery/<today>/clusters.json` already exists.
+
+- **If it exists** → `AskUserQuestion`: "Today's snapshot already present. Re-run the collection (consumes N MCP calls) or work from the existing cache?"
+  - If "work from cache" → skip steps 3-7 and go directly to the console display (step 8) by reading the existing files.
+  - If "re-run" → continue normally, **overwrite** the existing files.
+- **If it doesn't exist** → continue normally.
+
+## Step 3 — Collect the fan-outs
 
 ```
 list_fan_outs(projectId, limit: 100, sortBy: "frequency")
 ```
 
-Stocke la sortie brute dans `fanOutsRaw`. Si `totalCount` excède 100, note dans le `clusters.md` final qu'on a vu les 100 premiers et qu'il faudra paginer pour exhaustivité.
+Store the raw output in `fanOutsRaw`. If `totalCount` exceeds 100, note in the final `clusters.md` that you've seen the first 100 and that pagination is needed for completeness.
 
-## Étape 4 — Collecte des prompts trackés (pour le flag coverage)
+## Step 4 — Collect the tracked prompts (for the coverage flag)
 
 ```
 list_prompts(projectId, limit: 100)
 ```
 
-Stocke le set des `promptId` trackés et leur `brandVisibility` ou équivalent disponible dans la réponse. Si le tool ne retourne pas directement la visibilité par marque, considère que tout prompt présent dans la liste est "tracké" et reste à un flag binaire `tracked / untracked`.
+Store the set of tracked `promptId`s and their `brandVisibility` or equivalent available in the response. If the tool doesn't directly return per-brand visibility, consider that any prompt present in the list is "tracked" and stay with a binary flag `tracked / untracked`.
 
-## Étape 5 — Classification intent
+## Step 5 — Intent classification
 
-Pour chaque fan-out, déduis l'intent dominant à partir de la query. Règles (cumulables, dernière match = prioritaire) :
+For each fan-out, deduce the dominant intent from the query. Rules (cumulative, last match wins). Signals are listed for English and French; match against the project language, and add your own tokens for another target language.
 
-| Intent | Signaux dans la query |
+| Intent | Signals in the query |
 |---|---|
-| `transactional` | "prix", "tarif", "tarifs", "acheter", "abonnement", "abonnements", "gratuit", "gratuite", "free", "essai", "trial", "souscrire", "réserver", "rdv", "rendez-vous" |
-| `commercial` | "meilleur", "meilleurs", "top", "comparatif", "vs", "alternative", "alternatives", "comparaison", "lequel", "laquelle", "choisir" |
-| `reviews` | "avis", "review", "reviews", "retour", "retours", "témoignage", "témoignages", "expérience" |
-| `navigational` | présence d'un nom de marque connu, nom de domaine, "site officiel", "connexion", "login", ou query qui désigne explicitement une entité |
-| `informational` (défaut) | tout le reste : "comment", "qu'est-ce que", "pourquoi", "définition", "guide", "méthode", "exemple", "exemples", ou aucun signal des autres catégories |
+| `transactional` | EN: "price", "pricing", "cost", "buy", "subscription", "free", "trial", "sign up", "book", "booking", "demo" · FR: "prix", "tarif", "tarifs", "acheter", "abonnement", "gratuit", "essai", "souscrire", "réserver", "rdv", "rendez-vous" |
+| `commercial` | EN: "best", "top", "comparison", "vs", "alternative", "alternatives", "which", "choose" · FR: "meilleur", "meilleurs", "comparatif", "comparaison", "lequel", "laquelle", "choisir" |
+| `reviews` | EN: "review", "reviews", "opinion", "feedback", "testimonial", "experience" · FR: "avis", "retour", "retours", "témoignage", "témoignages", "expérience" |
+| `navigational` | presence of a known brand name, a domain name, "official site" / "site officiel", "login", "sign in" / "connexion", or a query that explicitly designates an entity |
+| `informational` (default) | everything else: EN "how", "what is", "why", "definition", "guide", "method", "example", "examples" · FR "comment", "qu'est-ce que", "pourquoi", "définition", "guide", "méthode", "exemple", "exemples", or no signal from the other categories |
 
-Si une query matche plusieurs intents, choisis le plus spécifique dans l'ordre transactional > commercial > reviews > navigational > informational.
+If a query matches several intents, pick the most specific in the order transactional > commercial > reviews > navigational > informational.
 
-## Étape 6 — Clusterisation thème + intent
+## Step 6 — Theme + intent clustering
 
-Algorithme :
+Algorithm:
 
-1. **Tokenisation** : pour chaque fan-out, extrais les tokens significatifs (mots ≥ 4 caractères, hors stop-words FR/EN, normalisés sans accents et en lowercase).
-2. **Groupement thématique** : groupe les fan-outs qui partagent au moins **2 tokens significatifs en commun**, ou un token saillant rare (apparaissant dans < 30% des fan-outs).
-3. **Sous-cluster intent** : à l'intérieur d'un cluster thématique, si plusieurs intents coexistent avec une fréquence comparable (chacun ≥ 20% du cluster), sépare en sous-clusters par intent. Sinon, garde l'intent dominant pour tout le cluster.
-4. **Cap à 15 clusters** : si plus de 15 clusters émergent, fusionne les plus petits dans un cluster `divers` ou ignore ceux à freq cumulée < 2.
-5. **Pour chaque cluster, calcule** :
-   - `theme` : token le plus saillant et représentatif (pas un mot vide)
-   - `intent` : intent dominant
-   - `cumulativeFrequency` : somme des `occurrences` des fan-outs du cluster
-   - `llmsConcerned` : union des LLMs (ex: `["CHATGPT", "PERPLEXITY"]`)
-   - `promptIds` : union dédupliquée
-   - `coverageStatus` : `tracked` si ≥ 1 prompt parent du cluster est dans le set tracké, `untracked` sinon
-   - `seedSuggested` : le titre du fan-out le plus fréquent du cluster, **simplifié** (retirer les mentions de marque concurrente, retirer les superlatifs marketing type "meilleur", garder une formulation neutre exploitable comme seed DataForSEO)
-   - `suggestedCommand` : selon intent et statut, propose :
-     - `transactional` ou `commercial` → `/mentionable-pillar "<seedSuggested>" --project-slug <projectSlug>`
-     - `informational` à haut volume LLM → `/mentionable-pillar "<seedSuggested>" --project-slug <projectSlug>`
-     - `informational` à faible volume LLM (<5) → `/mentionable-brief "<seedSuggested>"`
-     - `navigational` → `/mentionable-article` directement (page courte ciblée)
-6. **Tri** : par `cumulativeFrequency` décroissant.
+1. **Tokenization**: for each fan-out, extract the significant tokens (words ≥ 4 characters, excluding FR/EN stop-words, normalized without accents and lowercased).
+2. **Thematic grouping**: group the fan-outs that share at least **2 significant tokens in common**, or a rare salient token (appearing in < 30% of the fan-outs).
+3. **Intent sub-cluster**: within a thematic cluster, if several intents coexist with comparable frequency (each ≥ 20% of the cluster), split into sub-clusters by intent. Otherwise, keep the dominant intent for the whole cluster.
+4. **Cap at 15 clusters**: if more than 15 clusters emerge, merge the smallest into a `divers` cluster or drop those with cumulative freq < 2.
+5. **For each cluster, compute**:
+   - `theme`: the most salient and representative token (not a stop-word)
+   - `intent`: dominant intent
+   - `cumulativeFrequency`: sum of the `occurrences` of the cluster's fan-outs
+   - `llmsConcerned`: union of the LLMs (e.g. `["CHATGPT", "PERPLEXITY"]`)
+   - `promptIds`: deduplicated union
+   - `coverageStatus`: `tracked` if ≥ 1 parent prompt of the cluster is in the tracked set, `untracked` otherwise
+   - `seedSuggested`: the title of the cluster's most frequent fan-out, **simplified** (remove competitor brand mentions, remove marketing superlatives like "best", keep a neutral phrasing usable as a DataForSEO seed)
+   - `suggestedCommand`: depending on intent and status, propose:
+     - `transactional` or `commercial` → `/mentionable-pillar "<seedSuggested>" --project-slug <projectSlug>`
+     - `informational` with high LLM volume → `/mentionable-pillar "<seedSuggested>" --project-slug <projectSlug>`
+     - `informational` with low LLM volume (<5) → `/mentionable-brief "<seedSuggested>"`
+     - `navigational` → `/mentionable-article` directly (short targeted page)
+6. **Sort**: by descending `cumulativeFrequency`.
 
-## Étape 7 — Écriture des fichiers
+## Step 7 — Writing the files
 
-Dossier : `projects/<projectSlug>/discovery/<today>/`
+Folder: `projects/<projectSlug>/discovery/<today>/`
 
 ### 7.1 — `clusters.json` (machine-readable)
 
@@ -103,12 +107,12 @@ Dossier : `projects/<projectSlug>/discovery/<today>/`
     {
       "id": "cluster-1",
       "rank": 1,
-      "theme": "<token saillant>",
+      "theme": "<salient token>",
       "intent": "informational|commercial|transactional|navigational|reviews",
       "cumulativeFrequency": <int>,
       "llmsConcerned": ["CHATGPT", "PERPLEXITY"],
       "coverageStatus": "tracked|untracked",
-      "seedSuggested": "<seed prêt à passer à /mentionable-pillar>",
+      "seedSuggested": "<seed ready to pass to /mentionable-pillar>",
       "suggestedCommand": "/mentionable-pillar \"<seed>\" --project-slug <projectSlug>",
       "fanOuts": [
         { "query": "<query>", "occurrences": <int>, "llms": [...], "promptIds": [...] }
@@ -124,33 +128,33 @@ Dossier : `projects/<projectSlug>/discovery/<today>/`
 ```markdown
 # Discovery clusters — <projectName>
 
-> Snapshot du <today> · <totalFanOutsAnalyzed> fan-outs analysés · <totalClustersFound> clusters
+> Snapshot of <today> · <totalFanOutsAnalyzed> fan-outs analyzed · <totalClustersFound> clusters
 
 ## TL;DR
 
-- **Top cluster** : `<theme #1>` (<intent>, freq=<X>, <coverageStatus>) — seed suggéré : `<seedSuggested>`
-- **<N> clusters non couverts** (priorité GEO)
-- **<N> clusters trackés mais à enrichir**
+- **Top cluster**: `<theme #1>` (<intent>, freq=<X>, <coverageStatus>) — suggested seed: `<seedSuggested>`
+- **<N> uncovered clusters** (GEO priority)
+- **<N> tracked but under-served clusters**
 
-## Top 5 clusters à attaquer
+## Top 5 clusters to attack
 
-| Rank | Thème | Intent | Fréq cumulée | LLMs | Coverage | Commande suggérée |
+| Rank | Theme | Intent | Cumulative freq | LLMs | Coverage | Suggested command |
 |---|---|---|---|---|---|---|
 | 1 | `<theme>` | <intent> | <X> | <llms> | <status> | `/mentionable-pillar "<seed>" --project-slug <slug>` |
 | ... | | | | | | |
 
-## Détail par cluster
+## Detail per cluster
 
 ### Cluster #1 — <theme>
 
-- **Intent** : <intent>
-- **Fréquence cumulée** : <X> occurrences sur <N> fan-outs
-- **LLMs** : <liste>
-- **Coverage** : <status>
-- **Seed suggéré** : `<seedSuggested>`
-- **Commande** : `<suggestedCommand>`
+- **Intent**: <intent>
+- **Cumulative frequency**: <X> occurrences across <N> fan-outs
+- **LLMs**: <list>
+- **Coverage**: <status>
+- **Suggested seed**: `<seedSuggested>`
+- **Command**: `<suggestedCommand>`
 
-**Fan-outs représentatifs** :
+**Representative fan-outs**:
 
 | Query | Occurrences | LLMs |
 |---|---|---|
@@ -159,30 +163,30 @@ Dossier : `projects/<projectSlug>/discovery/<today>/`
 
 ### Cluster #2 — ...
 
-(répéter)
+(repeat)
 
 ---
 
-## Limites de ce snapshot
+## Limits of this snapshot
 
-- <N> fan-outs vus sur <totalCount> disponibles (paginer si totalCount > 100)
-- <autres caveats>
+- <N> fan-outs seen out of <totalCount> available (paginate if totalCount > 100)
+- <other caveats>
 ```
 
 ### 7.3 — `fan-outs-raw.json`
 
-Le brut de `list_fan_outs` (la donnée que tu as récupérée en étape 3), pour audit ultérieur et permettre à `/mentionable-pillar --from-cluster` de la relire sans re-call MCP.
+The raw output of `list_fan_outs` (the data you retrieved in step 3), for later audit and to allow `/mentionable-pillar --from-cluster` to re-read it without re-calling MCP.
 
-## Étape 8 — Résumé console
+## Step 8 — Console summary
 
-Affiche dans le chat :
+Show in the chat:
 
 ```
-✅ Snapshot généré : projects/<projectSlug>/discovery/<today>/
-   Projet : <projectName>
+✅ Snapshot generated: projects/<projectSlug>/discovery/<today>/
+   Project: <projectName>
    <totalFanOutsAnalyzed> fan-outs · <totalClustersFound> clusters
 
-🎯 Top 5 clusters (par fréquence LLM cumulée) :
+🎯 Top 5 clusters (by cumulative LLM frequency):
 
 1. <theme> [<intent>, freq=<X>, <status>]
    → /mentionable-pillar "<seed>" --project-slug <projectSlug>
@@ -192,35 +196,35 @@ Affiche dans le chat :
 
 3. ... (etc.)
 
-📊 Répartition :
-   - <N> clusters informational
-   - <N> clusters commercial / transactional
-   - <N> clusters non-trackés (priorité GEO)
+📊 Breakdown:
+   - <N> informational clusters
+   - <N> commercial / transactional clusters
+   - <N> untracked clusters (GEO priority)
 
-Prochain run conseillé : dans 2-4 semaines pour observer l'évolution des fan-outs.
+Next recommended run: in 2-4 weeks to observe how the fan-outs evolve.
 ```
 
-## Règles strictes
+## Strict rules
 
-- **Pas d'invention** : les clusters et les seeds suggérés viennent UNIQUEMENT des fan-outs réels collectés. Pas de seed deviné, pas de cluster théorique.
-- **Seed simplifié** : un `seedSuggested` doit être un terme de recherche neutre (2-5 mots), pas une phrase entière. Retirer les mentions de marque, les superlatifs marketing ("meilleur", "top"), les modificateurs régionaux sauf si centraux au thème.
-- **Cap raisonnable** : 15 clusters max. Au-delà, le rapport devient illisible. Fusionne les petits clusters dans `divers` ou abandonne-les.
-- **Persistance** : ne supprime JAMAIS un snapshot existant sans demander confirmation. L'historique est la valeur principale de cette commande.
-- **Confidentialité** : `projects/` est gitignoré globalement. Les fan-outs contiennent des données client — pas de leak.
+- **No invention**: the clusters and suggested seeds come ONLY from the real fan-outs collected. No guessed seed, no theoretical cluster.
+- **Simplified seed**: a `seedSuggested` must be a neutral search term (2-5 words), not a full sentence. Remove brand mentions, marketing superlatives ("best", "top"), regional modifiers unless central to the theme.
+- **Reasonable cap**: 15 clusters max. Beyond that, the report becomes unreadable. Merge small clusters into `divers` or drop them.
+- **Persistence**: NEVER delete an existing snapshot without asking for confirmation. History is the primary value of this command.
+- **Confidentiality**: `projects/` is globally gitignored. Fan-outs contain client data — no leak.
 
-## Chaînage suggéré en aval
+## Suggested downstream chaining
 
-Une fois `clusters.json` produit, le workflow continue manuellement :
+Once `clusters.json` is produced, the workflow continues manually:
 
-1. L'utilisateur choisit un cluster (visuellement, depuis `clusters.md`)
-2. Il lance la commande suggérée. Pour les pilier+satellites :
+1. The user picks a cluster (visually, from `clusters.md`)
+2. They run the suggested command. For pillar+satellites:
    ```
    /mentionable-pillar "<seedSuggested>" --project-slug <projectSlug> --from-cluster projects/<projectSlug>/discovery/<today>/clusters.json#cluster-1
    ```
-   Le flag `--from-cluster` permet à `/mentionable-pillar` de :
-   - skip la sélection projet (déduit du path)
-   - réutiliser les fan-outs déjà collectés (skip le call list_fan_outs de l'étape 4)
-   - faire référence au cluster source dans le `plan.md` (traçabilité)
-3. Puis `/mentionable-article projects/<projectSlug>/pillars/<slug>` pour générer le contenu.
+   The `--from-cluster` flag lets `/mentionable-pillar`:
+   - skip the project selection (deduced from the path)
+   - reuse the already-collected fan-outs (skip the list_fan_outs call in step 4)
+   - reference the source cluster in the `plan.md` (traceability)
+3. Then `/mentionable-article projects/<projectSlug>/pillars/<slug>` to generate the content.
 
-Voir [playbooks/12-clusters-discovery.md](../../playbooks/12-clusters-discovery.md) pour le workflow détaillé.
+See [playbooks/12-clusters-discovery.md](../../playbooks/12-clusters-discovery.md) for the detailed workflow.

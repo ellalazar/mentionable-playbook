@@ -1,102 +1,102 @@
 # Playbook 04 — Content gap via fan-outs
 
-> Les fan-outs sont **l'intention réelle** des LLMs : les requêtes web qu'ils lancent en coulisses pour répondre.
-> Travailler les fan-outs sur lesquels la marque n'apparaît pas = backlog éditorial GEO direct.
+> Fan-outs are the **real intent** of the LLMs: the web queries they run behind the scenes to answer.
+> Working the fan-outs where the brand doesn't appear = a direct GEO editorial backlog.
 
-## Objectif
+## Goal
 
-Produire un **backlog éditorial de 20 sujets** issus des fan-outs non couverts, classés par score de priorité (fréquence × intent × couverture).
+Produce an **editorial backlog of 20 topics** drawn from uncovered fan-outs, ranked by priority score (frequency × intent × coverage).
 
-## Pour qui
+## Who it's for
 
-- **SEO content / éditorial** qui pilote la production
-- **SEO in-house** qui priorise un calendrier de publication
-- **Agence SEO** qui doit défendre un budget contenu auprès du client
-- **Rédacteurs** en quête d'angles d'articles concrets
+- **SEO content / editorial** running production
+- **In-house SEO** prioritizing a publishing calendar
+- **SEO agency** who has to defend a content budget to the client
+- **Writers** looking for concrete article angles
 
-## Pré-requis
+## Prerequisites
 
-- MCP Mentionable installé
-- 7+ jours de tracking pour avoir des fan-outs significatifs (les fan-outs s'accumulent dans le temps)
-- Idéalement : 20+ prompts trackés
+- Mentionable MCP installed
+- 7+ days of tracking for meaningful fan-outs (fan-outs accumulate over time)
+- Ideally: 20+ tracked prompts
 
-## Tools MCP utilisés
+## MCP tools used
 
 - `list_projects`
-- `list_fan_outs` — la matière première
-- `list_prompts` — pour croiser couverture / non couverture
+- `list_fan_outs` — the raw material
+- `list_prompts` — to cross-check coverage / non-coverage
 
-## Sur Claude Code
+## On Claude Code
 
 ```
 /mentionable-content-gap
 ```
 
-Avec un filtre thématique :
+With a topic filter:
 
 ```
-/mentionable-content-gap comparatif
+/mentionable-content-gap comparison
 /mentionable-content-gap "open source"
 ```
 
-## Sur Cursor / Claude Desktop / autre client
+## On Cursor / Claude Desktop / another client
 
 ```text
-Tu es un stratège contenu GEO. Construis un backlog éditorial issu des fan-outs non couverts.
+You are a GEO content strategist. Build an editorial backlog from uncovered fan-outs.
 
 1. list_projects() → projectId
 2. list_fan_outs(projectId, limit: 100, sortBy: "frequency")
-   [si filtre thématique : ajouter filters.search: "<thème>"]
-3. list_prompts(projectId, limit: 100) pour identifier les fan-outs déjà couverts
+   [if topic filter: add filters.search: "<topic>"]
+3. list_prompts(projectId, limit: 100) to identify already-covered fan-outs
 
-Pour chaque fan-out :
-- classe l'intent (informationnel / comparatif / transactionnel / reviews)
-- évalue la couverture (couvert / partiellement / non couvert)
-- calcule un score : fréquence × intent_mult × coverage_mult
-  intent_mult : comparatif 1.5 · transactionnel 1.3 · reviews 1.2 · info 1
-  coverage_mult : non couvert 1.5 · partiel 1 · couvert 0.3
+For each fan-out:
+- classify the intent (informational / comparative / transactional / reviews)
+- assess coverage (covered / partial / not covered)
+- compute a score: frequency × intent_mult × coverage_mult
+  intent_mult: comparative 1.5 · transactional 1.3 · reviews 1.2 · info 1
+  coverage_mult: not covered 1.5 · partial 1 · covered 0.3
 
-Rends un rapport markdown :
-- Top 20 sujets (tableau : sujet, intent, fréquence, LLMs, statut, score)
-- Répartition par intent
-- Répartition par LLM
-- 5 sujets à attaquer en priorité avec format suggéré et lien vers /mentionable-brief
+Return a markdown report:
+- Top 20 topics (table: topic, intent, frequency, LLMs, status, score)
+- Breakdown by intent
+- Breakdown by LLM
+- 5 topics to attack first with suggested format and link to /mentionable-brief
 
-Règles : sujet = fan-out tel quel, pas de reformulation, regrouper les doublons sémantiques.
+Rules: topic = fan-out as-is, no rewording, group semantic duplicates.
 ```
 
-## Exemple de livrable
+## Sample deliverable
 
 ```markdown
-# Backlog éditorial GEO — Acme SaaS
+# GEO editorial backlog — Acme SaaS
 
-> Issu de 87 fan-outs analysés · Filtre appliqué : aucun
+> Drawn from 87 analyzed fan-outs · Filter applied: none
 
-## Top 20 sujets prioritaires
+## Top 20 priority topics
 
-| # | Sujet | Intent | Fréq | LLMs | Statut | Score |
+| # | Topic | Intent | Freq | LLMs | Status | Score |
 |---|---|---|---|---|---|---|
-| 1 | comparatif [catégorie] open source 2026 | Comparatif | 38 | 4/5 | non couvert | 85.5 |
-| 2 | meilleur [catégorie] PME 2026 | Comparatif | 47 | 4/5 | partiel | 70.5 |
-| 3 | alternative à CompetitorA | Comparatif | 24 | 3/5 | non couvert | 54.0 |
-| 4 | [catégorie] vs CompetitorB avis | Comparatif | 21 | 3/5 | non couvert | 47.3 |
-| 5 | [catégorie] gratuit 2026 | Transactionnel | 19 | 4/5 | non couvert | 37.1 |
-| 6 | guide [catégorie] pour démarrer | Informationnel | 28 | 4/5 | non couvert | 42.0 |
-| 7 | tarifs [catégorie] comparés | Transactionnel | 15 | 3/5 | non couvert | 29.3 |
+| 1 | open source [category] comparison 2026 | Comparative | 38 | 4/5 | not covered | 85.5 |
+| 2 | best [category] for SMBs 2026 | Comparative | 47 | 4/5 | partial | 70.5 |
+| 3 | alternative to CompetitorA | Comparative | 24 | 3/5 | not covered | 54.0 |
+| 4 | [category] vs CompetitorB reviews | Comparative | 21 | 3/5 | not covered | 47.3 |
+| 5 | free [category] 2026 | Transactional | 19 | 4/5 | not covered | 37.1 |
+| 6 | [category] getting-started guide | Informational | 28 | 4/5 | not covered | 42.0 |
+| 7 | [category] pricing compared | Transactional | 15 | 3/5 | not covered | 29.3 |
 | ... | | | | | | |
 
-## Répartition par intent
+## Breakdown by intent
 
-| Intent | Sujets prioritaires |
+| Intent | Priority topics |
 |---|---|
-| Comparatif | 11 |
-| Informationnel | 5 |
-| Transactionnel | 3 |
+| Comparative | 11 |
+| Informational | 5 |
+| Transactional | 3 |
 | Reviews | 1 |
 
-## Répartition par LLM
+## Breakdown by LLM
 
-| LLM | Fan-outs uniques | Non couverts |
+| LLM | Unique fan-outs | Not covered |
 |---|---|---|
 | ChatGPT | 64 | 41 |
 | Perplexity | 71 | 22 |
@@ -104,43 +104,43 @@ Règles : sujet = fan-out tel quel, pas de reformulation, regrouper les doublons
 | Claude | 47 | 28 |
 | AIO | 19 | 17 |
 
-## 5 sujets à attaquer en priorité
+## 5 topics to attack first
 
-1. **comparatif [catégorie] open source 2026**
-   — Intent comparatif, 4/5 LLMs, non couvert
-   — Format : article long-form comparatif (5-7 outils, tableau, méthodologie)
-   — `/mentionable-brief "comparatif [catégorie] open source 2026"`
+1. **open source [category] comparison 2026**
+   — Comparative intent, 4/5 LLMs, not covered
+   — Format: long-form comparison article (5-7 tools, table, methodology)
+   — `/mentionable-brief "open source [category] comparison 2026"`
 
-2. **alternative à CompetitorA**
-   — Capter le trafic GEO du leader
-   — Format : page comparative dédiée + landing
-   — `/mentionable-brief "alternative à CompetitorA"`
+2. **alternative to CompetitorA**
+   — Capture the leader's GEO traffic
+   — Format: dedicated comparison page + landing
+   — `/mentionable-brief "alternative to CompetitorA"`
 
-3. **[catégorie] gratuit 2026**
-   — Intent transactionnel, fan-out classique
-   — Format : page comparative free tier + offre du produit
-   — `/mentionable-brief "[catégorie] gratuit 2026"`
+3. **free [category] 2026**
+   — Transactional intent, classic fan-out
+   — Format: free-tier comparison page + product offer
+   — `/mentionable-brief "free [category] 2026"`
 
-4. **guide [catégorie] pour démarrer**
-   — Intent informationnel mais énorme volume (28)
-   — Format : guide pédagogique long, schéma, FAQ
-   — `/mentionable-brief "guide [catégorie] pour démarrer"`
+4. **[category] getting-started guide**
+   — Informational intent but huge volume (28)
+   — Format: long educational guide, diagram, FAQ
+   — `/mentionable-brief "[category] getting-started guide"`
 
-5. **[catégorie] vs CompetitorB avis**
-   — Comparatif direct, capter recherche de validation
-   — Format : page vs avec avis utilisateurs croisés
-   — `/mentionable-brief "[catégorie] vs CompetitorB avis"`
+5. **[category] vs CompetitorB reviews**
+   — Direct comparison, capture validation searches
+   — Format: vs page with cross-referenced user reviews
+   — `/mentionable-brief "[category] vs CompetitorB reviews"`
 ```
 
-## Variantes
+## Variants
 
-- **Filtre par LLM** : "concentre-toi sur les fan-outs Gemini" si on veut attaquer un LLM spécifique
-- **Filtre par concurrent** : "ne garde que les fan-outs où CompetitorA apparaît" (recoupe avec `/mentionable-reverse`)
-- **Backlog mensuel** : "produis un calendrier sur 12 sujets pour les 3 prochains mois"
-- **Backlog par persona** : si personas configurés, segmenter par persona
+- **Filter by LLM**: "focus on Gemini fan-outs" if you want to attack a specific LLM
+- **Filter by competitor**: "only keep fan-outs where CompetitorA appears" (overlaps with `/mentionable-reverse`)
+- **Monthly backlog**: "produce a calendar of 12 topics for the next 3 months"
+- **Backlog by persona**: if personas are configured, segment by persona
 
-## Aller plus loin
+## Going further
 
-- [Brief d'article complet sur un fan-out précis](05-brief-article.md)
-- [Reverse engineering pour comprendre qui couvre déjà](03-reverse-engineering-concurrents.md)
-- [Reporting hebdo qui suit l'évolution des fan-outs](08-reporting-hebdo-geo.md)
+- [Full article brief on a specific fan-out](05-brief-article.md)
+- [Reverse engineering to understand who already covers it](03-reverse-engineering-concurrents.md)
+- [Weekly report that tracks fan-out changes](08-reporting-hebdo-geo.md)

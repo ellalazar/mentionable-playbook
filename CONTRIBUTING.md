@@ -1,83 +1,83 @@
-# Contribuer
+# Contributing
 
-Tu as un workflow GEO qui marche bien chez tes clients ? Tu veux ajouter un use case, corriger une coquille, traduire un playbook ? Bienvenue.
+Got a GEO workflow that works well with your clients? Want to add a use case, fix a typo, translate a playbook? Welcome.
 
-## Ajouter un use case
+## Adding a use case
 
-Un use case = **1 slash command + 1 playbook .md**.
+A use case = **1 slash command + 1 .md playbook**.
 
 ### 1. Slash command
 
-Crée `.claude/commands/mentionable-<nom>.md` avec ce squelette :
+Create `.claude/commands/mentionable-<name>.md` with this skeleton:
 
 ```markdown
 ---
-description: <une phrase qui décrit le livrable>
-argument-hint: [argument-optionnel]
+description: <one sentence describing the deliverable>
+argument-hint: [optional-argument]
 ---
 
-Tu vas <objectif clair>.
+You are going to <clear objective>.
 
-Argument fourni : `$ARGUMENTS`
+Argument provided: `$ARGUMENTS`
 
-## Étape 1 — <action>
+## Step 1 — <action>
 
-[appel MCP avec inputs précis]
+[MCP call with precise inputs]
 
-## Étape 2 — <action>
+## Step 2 — <action>
 
 [...]
 
-## Étape N — Produire le livrable
+## Step N — Produce the deliverable
 
-Format markdown :
+Markdown format:
 
-### <Titre>
+### <Title>
 
-[structure exacte du rendu]
+[exact structure of the output]
 
-## Règles
+## Rules
 
-- [contraintes de qualité]
+- [quality constraints]
 ```
 
-### 2. Playbook .md
+### 2. .md playbook
 
-Crée `playbooks/<NN>-<slug>.md` avec :
+Create `playbooks/<NN>-<slug>.md` with:
 
-- **Objectif** (1 phrase)
-- **Pour qui** (2-4 personas)
-- **Pré-requis**
-- **Tools MCP utilisés**
-- **Sur Claude Code** (la slash command)
-- **Sur autre client** (le prompt complet à copier)
-- **Exemple de livrable** (markdown du rendu attendu)
-- **Variantes** (filtres, déclinaisons)
-- **Aller plus loin** (liens vers playbooks complémentaires)
+- **Objective** (1 sentence)
+- **For whom** (2-4 personas)
+- **Requirements**
+- **MCP tools used**
+- **On Claude Code** (the slash command)
+- **On another client** (the full prompt to copy)
+- **Sample deliverable** (markdown of the expected output)
+- **Variants** (filters, variations)
+- **Going further** (links to complementary playbooks)
 
-### 3. Mettre à jour le README
+### 3. Update the README
 
-Ajoute ton use case au tableau `Use cases inclus`.
+Add your use case to the `Use cases included` table.
 
-## Principes éditoriaux
+## Editorial principles
 
-- **Agnostique** : pas de niche spécifique, exemples génériques (`[votre secteur]`, `votre marque`)
-- **Factuel** : pas d'invention. Si une donnée n'existe pas, dire "non disponible"
-- **Actionnable** : un livrable doit être utilisable en l'état (envoi client, copy-paste backlog)
-- **Court** : un playbook qui dépasse 200 lignes est probablement deux playbooks
-- **Français** pour la v1 (traduction EN à venir)
+- **Agnostic**: no specific niche, generic examples (`[your industry]`, `your brand`)
+- **Factual**: no invention. If a data point doesn't exist, say "not available"
+- **Actionable**: a deliverable must be usable as-is (send to a client, copy-paste a backlog)
+- **Short**: a playbook that runs past 200 lines is probably two playbooks
+- **English** for the docs (French content is produced per project via the `language` setting)
 
 ## Process
 
 1. Fork
-2. Branche `feat/<nom-use-case>`
-3. PR avec description du use case et un exemple de livrable réel (anonymisé)
-4. Review : on regarde format + valeur + qualité éditoriale
+2. Branch `feat/<use-case-name>`
+3. PR with a description of the use case and a real sample deliverable (anonymized)
+4. Review: we look at format + value + editorial quality
 
-## Bugs et corrections
+## Bugs and fixes
 
-Issues bienvenues. Pour les corrections de coquilles, PR direct sans issue.
+Issues welcome. For typo fixes, open a PR directly without an issue.
 
-## Code de conduite
+## Code of conduct
 
-Soyez respectueux, factuel, sourcé. Pas de bashing de produits concurrents.
+Be respectful, factual, sourced. No bashing of competing products.

@@ -1,62 +1,66 @@
 ---
-description: Génère 1 à N images d'article via Gemini (gemini-2.5-flash-image) à partir d'un article ou brief
-argument-hint: <chemin .md optionnel ou sujet>
+description: Generates 1 to N article images via Gemini (gemini-2.5-flash-image) from an article or brief
+argument-hint: <optional .md path or topic>
 ---
 
-Tu es un directeur artistique éditorial. Tu dois générer des **images d'article** via Gemini à partir du contenu d'un article (ou brief) déjà produit.
+You are an editorial art director. You must generate **article images** via Gemini from the content of an already-produced article (or brief).
 
-Argument fourni : `$ARGUMENTS`
+## Output language
 
-## Pré-requis (à vérifier au tout début, une seule fois)
+Produce everything the end user reads (the deliverable's headings and prose) in the project's language, read from `language` in `projects/<projectSlug>/.project.json` (default `en` when the field or file is absent). Templates in this command are written in English; if the project language is not English, write all prose in that language while keeping command names, tool names, code, and data identifiers unchanged.
 
-1. `package.json` à la racine et dossier `node_modules/@google/genai` présent. Si absent → exécute `npm install` et explique.
-2. Fichier `.env` présent à la racine avec `GEMINI_API_KEY=...`. Si absent → indique à l'utilisateur de copier `.env.example` en `.env` et de renseigner sa clé (https://aistudio.google.com/apikey, **billing activé requis** pour la génération d'images).
+Argument provided: `$ARGUMENTS`
+
+## Prerequisites (check at the very start, once)
+
+1. `package.json` at the root and the `node_modules/@google/genai` folder present. If missing → run `npm install` and explain.
+2. `.env` file present at the root with `GEMINI_API_KEY=...`. If missing → tell the user to copy `.env.example` to `.env` and fill in their key (https://aistudio.google.com/apikey, **billing enabled required** for image generation).
 3. Node ≥ 18 (`node --version`).
 
-Si l'un de ces pré-requis manque, arrête et explique clairement la commande à exécuter.
+If any of these prerequisites is missing, stop and clearly explain the command to run.
 
-## Étape 1 — Récupérer le contenu de l'article
+## Step 1 — Retrieve the article content
 
-**Convention de structure** : chaque article vit dans son propre dossier scopé projet sous `projects/<projectSlug>/articles/<articleSlug>/` avec :
+**Structure convention**: each article lives in its own project-scoped folder under `projects/<projectSlug>/articles/<articleSlug>/` with:
 ```
 projects/<projectSlug>/articles/<articleSlug>/
-├── article.md      ← le contenu de l'article (ou index.md pour les anciens)
-├── jsonld.json     ← schémas JSON-LD (si généré via /mentionable-article)
-├── sources.json    ← audit trail des citations
-├── meta.json       ← métadonnées
-└── images/         ← les images générées (créé par cette commande)
+├── article.md      ← the article content (or index.md for older ones)
+├── jsonld.json     ← JSON-LD schemas (if generated via /mentionable-article)
+├── sources.json    ← citation audit trail
+├── meta.json       ← metadata
+└── images/         ← the generated images (created by this command)
     ├── 1-cover.png
     └── ...
 ```
 
-Auto-détection à partir de `$ARGUMENTS` :
+Auto-detection from `$ARGUMENTS`:
 
-1. Si `$ARGUMENTS` est un **chemin de dossier** (ex. `projects/mon-client/articles/cnv-au-travail`) → lis `<dossier>/article.md` (ou `index.md` en fallback).
-2. Si `$ARGUMENTS` est un **chemin de fichier** (`.md`, `.txt`) → lis-le avec `Read`. Déduis `articleSlug` du dossier parent et `projectSlug` du segment `projects/<projectSlug>/articles/...` du path.
-3. Sinon, si `$ARGUMENTS` ressemble à un **sujet/titre** → cherche dans la conversation ou dans `projects/*/articles/*/article.md` l'article correspondant.
-4. Si `$ARGUMENTS` est vide → utilise le **dernier article/brief de la conversation**. Si rien, demande.
+1. If `$ARGUMENTS` is a **folder path** (e.g. `projects/my-client/articles/cnv-au-travail`) → read `<folder>/article.md` (or `index.md` as a fallback).
+2. If `$ARGUMENTS` is a **file path** (`.md`, `.txt`) → read it with `Read`. Deduce `articleSlug` from the parent folder and `projectSlug` from the `projects/<projectSlug>/articles/...` segment of the path.
+3. Otherwise, if `$ARGUMENTS` looks like a **topic/title** → look in the conversation or in `projects/*/articles/*/article.md` for the matching article.
+4. If `$ARGUMENTS` is empty → use the **last article/brief in the conversation**. If none, ask.
 
-**Si le path ne contient pas de `projectSlug`** (article ancien à plat sous `articles/<slug>/`) : les images vont quand même dans le dossier de l'article (rétrocompat). Pour les nouveaux articles, le scoping projet est obligatoire.
+**If the path doesn't contain a `projectSlug`** (old flat article under `articles/<slug>/`): the images still go in the article's folder (backward compat). For new articles, project scoping is mandatory.
 
-Synthétise mentalement : titre, intent, 3-5 idées visuelles clés, tone éditorial, secteur.
+Mentally synthesize: title, intent, 3-5 key visual ideas, editorial tone, sector.
 
-## Étape 2 — Demande interactive (nombre, types, style)
+## Step 2 — Interactive prompt (number, types, style)
 
-Pose à l'utilisateur via `AskUserQuestion` **trois questions** :
+Ask the user via `AskUserQuestion` **three questions**:
 
-1. **Combien d'images ?** (1, 2, 3, 4+)
-2. **Quel style ?**
-   - `photo` (défaut, recommandé pour blog) — photo éditoriale réaliste, vraies personnes, lumière naturelle
-   - `illustration` — flat editorial illustration, minimal, palette mutée
-   - `3D` — illustration 3D isométrique soft, style render moderne
-   - `sketch` — sketch hand-drawn, ink + watercolor
-3. **Quels types ?** (multi-select) :
-   - `cover` — couverture horizontale **16:9**, hero blog
-   - `social` — vignette carrée **1:1** pour LinkedIn / X / OG image
-   - `illustration` — illustration inline **4:3** pour une section
-   - `diagram` — schéma conceptuel **16:9** simple
+1. **How many images?** (1, 2, 3, 4+)
+2. **What style?**
+   - `photo` (default, recommended for a blog) — realistic editorial photo, real people, natural light
+   - `illustration` — flat editorial illustration, minimal, muted palette
+   - `3D` — soft isometric 3D illustration, modern render style
+   - `sketch` — hand-drawn sketch, ink + watercolor
+3. **Which types?** (multi-select):
+   - `cover` — horizontal **16:9** cover, blog hero
+   - `social` — square **1:1** thumbnail for LinkedIn / X / OG image
+   - `illustration` — inline **4:3** illustration for a section
+   - `diagram` — simple conceptual **16:9** diagram
 
-Mapping type → `--aspect-ratio` à passer au script :
+Type → `--aspect-ratio` mapping to pass to the script:
 | type | aspect-ratio |
 |---|---|
 | cover | `16:9` |
@@ -64,57 +68,57 @@ Mapping type → `--aspect-ratio` à passer au script :
 | illustration | `4:3` |
 | diagram | `16:9` |
 
-Si N images > nombre de types choisis, répartis intelligemment (ex : 3 = 1 cover + 2 illustrations).
-Pour chaque `illustration`/`diagram`, identifie la section/idée illustrée.
+If N images > number of chosen types, distribute intelligently (e.g. 3 = 1 cover + 2 illustrations).
+For each `illustration`/`diagram`, identify the section/idea being illustrated.
 
-## Étape 3 — Construire les prompts visuels
+## Step 3 — Build the visual prompts
 
-Pour chaque image, produis un prompt **en anglais** (Gemini rend mieux) avec :
+For each image, produce a prompt **in English** (Gemini renders better) with:
 
-- **Sujet** : scène concrète, humaine, ancrée dans le contenu de l'article
-- **Style par défaut (photo éditoriale réaliste)** : *professional editorial photography, photorealistic, candid documentary style, real adults in their 30s, natural light, shallow depth of field, soft window light, authentic expressions, sharp focus, no posed studio look*
-- **Composition** : focal point clair, cadrage cinéma, palette de couleurs cohérente sur toutes les images de l'article
-- **Contraintes (toujours) ** : *no text, no logos, no watermarks, no UI*, pas de mains/doigts déformés, pas de looks artificiels (CGI plastique, etc.)
-- **Style alternatif** : si l'utilisateur l'a demandé explicitement (ou si le sujet l'exige — diagram, schéma conceptuel), tu peux passer en illustration : *editorial flat illustration, minimal, muted palette with one accent color*. Sinon, garde le photo réaliste.
+- **Subject**: concrete, human scene, grounded in the article content
+- **Default style (realistic editorial photography)**: *professional editorial photography, photorealistic, candid documentary style, real adults in their 30s, natural light, shallow depth of field, soft window light, authentic expressions, sharp focus, no posed studio look*
+- **Composition**: clear focal point, cinematic framing, color palette consistent across all the article's images
+- **Constraints (always)**: *no text, no logos, no watermarks, no UI*, no deformed hands/fingers, no artificial looks (plastic CGI, etc.)
+- **Alternative style**: if the user explicitly asked for it (or if the subject requires it — diagram, conceptual schema), you can switch to illustration: *editorial flat illustration, minimal, muted palette with one accent color*. Otherwise, keep the realistic photo.
 
-> Le style photo réaliste est le défaut pour un blog. Ne passe en illustration que si l'utilisateur l'a explicitement demandé, ou pour un `diagram`.
+> The realistic photo style is the default for a blog. Only switch to illustration if the user explicitly asked for it, or for a `diagram`.
 
-## Étape 4 — Générer via Gemini
+## Step 4 — Generate via Gemini
 
-Les images sont écrites dans le sous-dossier `images/` du dossier d'article détecté en étape 1 (le script crée le dossier au besoin). Pour chaque prompt, lance en parallèle (un message, plusieurs Bash) :
+The images are written to the `images/` sub-folder of the article folder detected in step 1 (the script creates the folder if needed). For each prompt, run in parallel (one message, several Bash):
 
 ```bash
 npm run generate:image -- \
-  --prompt "<prompt-anglais>" \
-  --out "<dossier-article>/images/<n>-<type>.png" \
+  --prompt "<english-prompt>" \
+  --out "<article-folder>/images/<n>-<type>.png" \
   --aspect-ratio "<16:9|1:1|4:3>"
 ```
 
-Où `<dossier-article>` = `projects/<projectSlug>/articles/<articleSlug>` pour les nouveaux articles, ou `articles/<slug>` pour les anciens (rétrocompat).
+Where `<article-folder>` = `projects/<projectSlug>/articles/<articleSlug>` for new articles, or `articles/<slug>` for older ones (backward compat).
 
-Le script charge automatiquement `.env`, gère les erreurs 429 (quota / billing), et écrit le PNG. **N'ajoute pas `set -a && source .env`** : c'est inutile, le script s'en occupe.
+The script automatically loads `.env`, handles 429 errors (quota / billing), and writes the PNG. **Do not add `set -a && source .env`**: it's useless, the script takes care of it.
 
-## Étape 5 — Rapport final
+## Step 5 — Final report
 
-Écris `<dossier-article>/images/prompts.json` avec `[{ file, type, section, prompt }]` puis affiche :
+Write `<article-folder>/images/prompts.json` with `[{ file, type, section, prompt }]` then display:
 
 ```
-Article : <titre>
-Dossier : <dossier-article>/images/
+Article: <title>
+Folder: <article-folder>/images/
 
-Images générées :
-  1. cover         → 1-cover.png        — <résumé prompt>
+Generated images:
+  1. cover         → 1-cover.png        — <prompt summary>
   2. illustration  → 2-illustration.png — <section>
   ...
 ```
 
-Dans l'article (`articles/<slug>/index.md`), les images se référencent en relatif : `![alt](images/1-cover.png)`.
+In the article (`articles/<slug>/index.md`), the images are referenced relatively: `![alt](images/1-cover.png)`.
 
-## Règles strictes
+## Strict rules
 
-- **Jamais inventer le contenu de l'article** : si pas de source claire, demande.
-- **Cohérence visuelle** : même palette et style sur toutes les images d'un même run.
-- **Pas de texte dans les images** (les LLMs gèrent mal le texte généré).
-- **Prompts en anglais** même si l'article est en français.
-- **Pas de re-génération auto** : informe et laisse l'utilisateur relancer.
-- **Confirme avant de générer si N ≥ 5** (1 image = 1 appel Gemini payant).
+- **Never invent the article content**: if there's no clear source, ask.
+- **Visual consistency**: same palette and style across all images of a single run.
+- **No text in the images** (LLMs handle generated text poorly).
+- **Prompts in English** even if the article is in French.
+- **No auto re-generation**: inform the user and let them re-run.
+- **Confirm before generating if N ≥ 5** (1 image = 1 paid Gemini call).

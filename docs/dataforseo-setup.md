@@ -1,66 +1,66 @@
-# Setup DataForSEO
+# DataForSEO setup
 
-`/mentionable-pillar` utilise l'API DataForSEO pour la recherche de mots-clés, l'analyse SERP et le scoring KD. Ce guide te fait passer du zéro à `npm run pillar` qui tourne.
+`/mentionable-pillar` uses the DataForSEO API for keyword research, SERP analysis, and KD scoring. This guide takes you from zero to a working `npm run pillar`.
 
-## 1. Créer un compte
+## 1. Create an account
 
-1. Va sur [app.dataforseo.com](https://app.dataforseo.com/register).
-2. Crée un compte (mail + mot de passe ou Google).
-3. Tu reçois **1 $ de crédits gratuits** à l'inscription — assez pour 5-10 runs `/mentionable-pillar` sur un seed.
+1. Go to [app.dataforseo.com](https://app.dataforseo.com/register).
+2. Create an account (email + password, or Google).
+3. You get **$1 in free credits** on signup — enough for 5-10 `/mentionable-pillar` runs on a seed.
 
-## 2. Récupérer tes credentials API
+## 2. Get your API credentials
 
-1. Une fois connecté, va dans **API Access** → onglet **API Dashboard** (`app.dataforseo.com/api-access`).
-2. Note les deux valeurs :
-   - **API Login** (souvent ton email)
-   - **API Password** (chaîne générée — clique sur "Show" pour la révéler)
+1. Once logged in, go to **API Access** → **API Dashboard** tab (`app.dataforseo.com/api-access`).
+2. Note the two values:
+   - **API Login** (often your email)
+   - **API Password** (a generated string — click "Show" to reveal it)
 
-Ces deux valeurs vont dans `.env`.
+Both values go into `.env`.
 
-## 3. Configurer le .env
+## 3. Configure the .env
 
-À la racine du repo :
+At the repo root:
 
 ```bash
 cp .env.example .env
 ```
 
-Édite `.env` :
+Edit `.env`:
 
 ```env
-DATAFORSEO_LOGIN=ton-email@example.com
+DATAFORSEO_LOGIN=your-email@example.com
 DATAFORSEO_PASSWORD=xxxxxxxxxxxxxxxx
 
-# Localisation par défaut. Override possible via CLI : --location 2840 --language en
+# Default location. Can be overridden via CLI: --location 2840 --language en
 LOCATION_CODE=2250
 LANGUAGE_CODE=fr
 ```
 
-## 4. Codes location & langue
+## 4. Location & language codes
 
-DataForSEO utilise des codes numériques pour les pays. Les plus utilisés :
+DataForSEO uses numeric codes for countries. The most common ones:
 
-| Pays | `LOCATION_CODE` | `LANGUAGE_CODE` |
+| Country | `LOCATION_CODE` | `LANGUAGE_CODE` |
 |---|---|---|
 | France | `2250` | `fr` |
-| États-Unis | `2840` | `en` |
-| Royaume-Uni | `2826` | `en` |
-| Espagne | `2724` | `es` |
-| Allemagne | `2276` | `de` |
-| Italie | `2380` | `it` |
-| Belgique (FR) | `2056` | `fr` |
+| United States | `2840` | `en` |
+| United Kingdom | `2826` | `en` |
+| Spain | `2724` | `es` |
+| Germany | `2276` | `de` |
+| Italy | `2380` | `it` |
+| Belgium (FR) | `2056` | `fr` |
 | Canada (FR) | `2124` | `fr` |
 | Canada (EN) | `2124` | `en` |
 
-Liste complète : [docs.dataforseo.com/v3/serp/google/locations/](https://docs.dataforseo.com/v3/serp/google/locations/).
+Full list: [docs.dataforseo.com/v3/serp/google/locations/](https://docs.dataforseo.com/v3/serp/google/locations/).
 
-## 5. Tester
+## 5. Test
 
 ```bash
 npm run pillar -- "cours de guitare"
 ```
 
-Tu dois voir :
+You should see:
 
 ```
 [1/4] Mots-clés autour de "cours de guitare" (loc=2250, lang=fr)…
@@ -75,27 +75,27 @@ Tu dois voir :
 ✅ Brief écrit : pillars/cours-de-guitare/brief.json
 ```
 
-## 6. Coût par run
+## 6. Cost per run
 
-Un run `/mentionable-pillar` consomme typiquement **0.05 à 0.15 $** de crédits DataForSEO :
-- ~0.01 $ — related keywords + suggestions (DataForSEO Labs)
-- ~0.003 $ — SERP organique top 10
-- Pas de coût supplémentaire pour le scraping des pages concurrentes (fait en local, pas via DataForSEO)
+A `/mentionable-pillar` run typically consumes **$0.05 to $0.15** in DataForSEO credits:
+- ~$0.01 — related keywords + suggestions (DataForSEO Labs)
+- ~$0.003 — organic SERP top 10
+- No extra cost for scraping competitor pages (done locally, not via DataForSEO)
 
-Avec 1 $ de crédits gratuits, tu fais facilement 8-10 runs pour tester.
+With $1 in free credits, you can easily do 8-10 runs to test.
 
-## Erreurs courantes
+## Common errors
 
-| Erreur | Cause | Fix |
+| Error | Cause | Fix |
 |---|---|---|
-| `DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD manquants` | `.env` absent ou variables vides | Voir étape 3 |
-| `401 Authentication failed` | Mauvais login / password | Re-copier depuis le dashboard, sans espace |
-| `40400 No tasks available` | Crédits épuisés | Recharger depuis le dashboard |
-| `Empty result` sur certains seeds | Seed trop niche ou mal localisé | Tester avec un `LOCATION_CODE` plus large ou un seed plus générique |
+| `DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD manquants` | `.env` missing or variables empty | See step 3 |
+| `401 Authentication failed` | Wrong login / password | Re-copy from the dashboard, with no whitespace |
+| `40400 No tasks available` | Credits exhausted | Top up from the dashboard |
+| `Empty result` on some seeds | Seed too niche or mislocalized | Try a broader `LOCATION_CODE` or a more generic seed |
 
-## Override par CLI
+## CLI override
 
-Tu peux écraser les défauts `.env` ponctuellement :
+You can override the `.env` defaults on a per-run basis:
 
 ```bash
 npm run pillar -- "yoga classes near me" --location 2840 --language en

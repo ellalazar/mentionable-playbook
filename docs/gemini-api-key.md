@@ -1,121 +1,121 @@
-# Créer une clé API Gemini avec billing activé
+# Create a Gemini API key with billing enabled
 
-> Pré-requis pour utiliser `/mentionable-images`. La génération d'images via Gemini (`gemini-2.5-flash-image`) **n'est pas disponible sur le free tier** — il faut un projet Google Cloud avec un compte de facturation lié (Tier 1).
+> Prerequisite for using `/mentionable-images`. Image generation via Gemini (`gemini-2.5-flash-image`) **is not available on the free tier** — you need a Google Cloud project with a billing account linked (Tier 1).
 
 ## TL;DR
 
 1. https://aistudio.google.com/api-keys
-2. Clique **"Set up billing"** sur ton projet
-3. Lie un compte de facturation (Prepay min. 10 $)
-4. Ta clé existante passe automatiquement en Tier 1 — pas besoin d'en recréer une
+2. Click **"Set up billing"** on your project
+3. Link a billing account (Prepay, min. $10)
+4. Your existing key automatically moves to Tier 1 — no need to recreate one
 
-## Méthode 1 — Via Google AI Studio (recommandé)
+## Method 1 — Via Google AI Studio (recommended)
 
-C'est la voie la plus courte. AI Studio crée et gère le projet Google Cloud pour toi.
+This is the shortest path. AI Studio creates and manages the Google Cloud project for you.
 
-### 1. Accéder à tes clés
+### 1. Access your keys
 
-Va sur **https://aistudio.google.com/api-keys**.
+Go to **https://aistudio.google.com/api-keys**.
 
-Tu verras la liste de tes clés API existantes avec, pour chacune :
-- Le **projet Google Cloud** associé
-- Le **Billing Tier** (Free / Tier 1 / Tier 2 / Tier 3)
+You'll see the list of your existing API keys, each with:
+- The associated **Google Cloud project**
+- The **Billing Tier** (Free / Tier 1 / Tier 2 / Tier 3)
 
-Si tu n'as pas encore de clé : clique **"Create API key"** et choisis (ou laisse AI Studio créer) un projet.
+If you don't have a key yet: click **"Create API key"** and choose (or let AI Studio create) a project.
 
-### 2. Activer le billing sur le projet
+### 2. Enable billing on the project
 
-Dans la colonne **Billing Tier**, clique **"Set up billing"** sur la ligne du projet qui héberge ta clé.
+In the **Billing Tier** column, click **"Set up billing"** on the row for the project that hosts your key.
 
-> ⚠️ Vérifie bien que tu actives le billing sur **le même projet** que celui de la clé. Activer le billing sur un autre projet ne débloque pas la clé.
+> ⚠️ Make sure you enable billing on **the same project** as the key. Enabling billing on a different project won't unlock the key.
 
-### 3. Lier un compte de facturation
+### 3. Link a billing account
 
-- **Nouveau compte** : remplis tes infos de contact + un moyen de paiement (CB)
-- **Compte existant** : sélectionne-le dans la liste
+- **New account**: fill in your contact details + a payment method (card)
+- **Existing account**: select it from the list
 
-Accepte les CGU selon ta région.
+Accept the terms according to your region.
 
-### 4. Choisir le plan de facturation
+### 4. Choose the billing plan
 
-- **Prepay** (recommandé) : tu charges un solde (minimum 10 $), Google débite au fur et à mesure
-- **Postpay** (si éligible) : facturation mensuelle
+- **Prepay** (recommended): you load a balance (minimum $10), Google draws down as you go
+- **Postpay** (if eligible): monthly billing
 
-> 💡 Le crédit gratuit de 300 $ Google Cloud **ne couvre pas** l'API Gemini. Tu paies dès le premier appel.
+> 💡 The $300 Google Cloud free credit **does not cover** the Gemini API. You pay from the first call.
 
-### 5. Premier versement
+### 5. First payment
 
-Pour le Prepay : effectue le versement initial. Le projet passe automatiquement en **Tier 1** et la génération d'images est débloquée.
+For Prepay: make the initial payment. The project automatically moves to **Tier 1** and image generation is unlocked.
 
-### 6. Vérifier
+### 6. Verify
 
-- Solde et tier : https://aistudio.google.com/billing
-- Test : `npm run generate:image -- --prompt "test blue circle" --out images/test.png`
+- Balance and tier: https://aistudio.google.com/billing
+- Test: `npm run generate:image -- --prompt "test blue circle" --out images/test.png`
 
-Si tu vois `✓ images/test.png` → c'est gagné. Si tu vois encore `429 free_tier` → la clé pointe vers un autre projet (retour étape 1, vérifie le rattachement).
+If you see `✓ images/test.png` → you're set. If you still see `429 free_tier` → the key points to a different project (back to step 1, check the association).
 
-## Méthode 2 — Via Google Cloud Console
+## Method 2 — Via Google Cloud Console
 
-Plus de contrôle, plus d'étapes. À utiliser si tu veux gérer le projet GCP manuellement (équipe, restrictions IAM, etc.).
+More control, more steps. Use this if you want to manage the GCP project manually (team, IAM restrictions, etc.).
 
-### 1. Créer ou sélectionner un projet
+### 1. Create or select a project
 
-**https://console.cloud.google.com/** → sélecteur de projet en haut → "New project" ou choisis-en un existant.
+**https://console.cloud.google.com/** → project selector at the top → "New project" or pick an existing one.
 
-### 2. Lier un compte de facturation
+### 2. Link a billing account
 
-Menu **Billing** → **Link a billing account** → crée ou lie un compte avec carte bancaire.
+**Billing** menu → **Link a billing account** → create or link an account with a payment card.
 
-### 3. Activer l'API Gemini
+### 3. Enable the Gemini API
 
-Menu **APIs & Services → Library** → recherche **"Generative Language API"** → clique **Enable**.
+**APIs & Services → Library** menu → search for **"Generative Language API"** → click **Enable**.
 
-### 4. Créer une clé API
+### 4. Create an API key
 
-Menu **APIs & Services → Credentials → Create credentials → API key**.
+**APIs & Services → Credentials → Create credentials → API key** menu.
 
-Copie la clé qui s'affiche.
+Copy the key that's displayed.
 
-### 5. Restreindre la clé (recommandé)
+### 5. Restrict the key (recommended)
 
-Sur la clé fraîchement créée, clique **Restrict key** :
-- **API restrictions** → coche uniquement **Generative Language API**
-- **Application restrictions** → garde "None" pour un usage CLI local
+On the freshly created key, click **Restrict key**:
+- **API restrictions** → check only **Generative Language API**
+- **Application restrictions** → keep "None" for local CLI use
 
-> 📌 À partir du **19 juin 2026**, Google déprécie les clés sans restriction. Restreins-la maintenant.
+> 📌 Starting **June 19, 2026**, Google is deprecating unrestricted keys. Restrict it now.
 
-### 6. Renseigner la clé dans le repo
+### 6. Add the key to the repo
 
 ```bash
 cp .env.example .env
-# édite .env
+# edit .env
 GEMINI_API_KEY=AIza...
 ```
 
-## Coûts indicatifs
+## Indicative costs
 
-- Tarifs à jour : https://ai.google.dev/gemini-api/docs/pricing
-- `gemini-2.5-flash-image` ≈ quelques centimes par image au moment de la rédaction
-- Chaque appel `/mentionable-images` génère N images = N appels payés
+- Up-to-date pricing: https://ai.google.dev/gemini-api/docs/pricing
+- `gemini-2.5-flash-image` ≈ a few cents per image at the time of writing
+- Each `/mentionable-images` call generates N images = N paid calls
 
-> Pour un article avec 1 cover + 2 illustrations : compte ~3 appels.
+> For an article with 1 cover + 2 illustrations: expect ~3 calls.
 
-## Notes importantes (2026)
+## Important notes (2026)
 
-- **Mars 2026** : les nouveaux comptes AI Studio sont forcés en plan **Prepay**
-- **Juin 2026** : les clés sans restriction d'API seront dépréciées — restreins toujours à "Generative Language API"
-- Le crédit gratuit GCP $300 ne s'applique **pas** à l'API Gemini
+- **March 2026**: new AI Studio accounts are forced onto the **Prepay** plan
+- **June 2026**: keys without an API restriction will be deprecated — always restrict to "Generative Language API"
+- The $300 GCP free credit does **not** apply to the Gemini API
 
 ## Troubleshooting
 
-| Erreur | Cause probable | Solution |
+| Error | Likely cause | Solution |
 |---|---|---|
-| `429 free_tier_requests, limit: 0` | Le billing n'est pas actif sur le projet de la clé | Vérifie le projet associé à la clé sur https://aistudio.google.com/api-keys |
-| `403 PERMISSION_DENIED` | API Generative Language pas activée | Active-la dans GCP Console → APIs & Services |
-| `400 API key not valid` | Clé incorrecte ou révoquée | Re-copie depuis AI Studio, vérifie l'absence d'espaces |
-| `429` malgré billing actif | Quota par minute dépassé | Attends quelques secondes ou répartis les appels |
+| `429 free_tier_requests, limit: 0` | Billing isn't active on the key's project | Check the project associated with the key at https://aistudio.google.com/api-keys |
+| `403 PERMISSION_DENIED` | Generative Language API not enabled | Enable it in GCP Console → APIs & Services |
+| `400 API key not valid` | Wrong or revoked key | Re-copy from AI Studio, check for stray whitespace |
+| `429` despite active billing | Per-minute quota exceeded | Wait a few seconds or spread out the calls |
 
-## Liens utiles
+## Useful links
 
 - [Gemini API — Billing](https://ai.google.dev/gemini-api/docs/billing)
 - [Gemini API — Pricing](https://ai.google.dev/gemini-api/docs/pricing)

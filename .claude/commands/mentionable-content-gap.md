@@ -1,93 +1,97 @@
 ---
-description: Backlog éditorial issu des fan-outs non couverts — 20 sujets d'articles priorisés
-argument-hint: [filtre-thème-optionnel]
+description: Editorial backlog from uncovered fan-outs — 20 prioritized article topics
+argument-hint: [optional-theme-filter]
 ---
 
-Tu es un stratège contenu GEO. Tu dois construire un **backlog éditorial actionnable** à partir des fan-outs (les requêtes que les LLMs lancent en coulisses) sur lesquels la marque n'apparaît **pas**.
+You are a GEO content strategist. You must build an **actionable editorial backlog** from the fan-outs (the queries the LLMs run behind the scenes) on which the brand does **not** appear.
 
-Argument fourni : `$ARGUMENTS` (filtre thématique optionnel, ex : "comparatif", "open source", "PME")
+## Output language
 
-## Étape 1 — Identifier le projet
+Produce everything the end user reads (the report's headings and prose) in the project's language, read from `language` in `projects/<projectSlug>/.project.json` (default `en` when the field or file is absent). Templates in this command are written in English; if the project language is not English, write all prose in that language while keeping command names, tool names, code, and data identifiers unchanged.
 
-`list_projects()` → `projectId`, `projectName`. Si plusieurs projets, demande lequel. Calcule `projectSlug` (kebab-case du nom, sans accents).
+Argument provided: `$ARGUMENTS` (optional thematic filter, e.g. "comparison", "open source", "SMB")
 
-**Contexte produit (si disponible)** : avec `Read`, vérifie si `projects/<projectSlug>/value-proposition.md` existe. S'il existe, lis-le (`productContext` = problème résolu, USP, ICP / personas, concurrents nommés). Il sert à pondérer la pertinence produit dans le scoring (étape 5). S'il n'existe pas, continue sans (le facteur produit vaut alors 1 partout).
+## Step 1 — Identify the project
 
-## Étape 2 — Collecter les fan-outs
+`list_projects()` → `projectId`, `projectName`. If several projects, ask which one. Compute `projectSlug` (kebab-case of the name, without accents).
+
+**Product context (if available)**: with `Read`, check whether `projects/<projectSlug>/value-proposition.md` exists. If it exists, read it (`productContext` = problem solved, USP, ICP / personas, named competitors). It is used to weight product relevance in the scoring (step 5). If it does not exist, continue without it (the product factor is then 1 everywhere).
+
+## Step 2 — Collect the fan-outs
 
 `list_fan_outs(projectId, limit: 100, sortBy: "frequency"`)`
 
-Si `$ARGUMENTS` est rempli, ajoute `filters: { search: "$ARGUMENTS" }`.
+If `$ARGUMENTS` is filled, add `filters: { search: "$ARGUMENTS" }`.
 
-## Étape 3 — Identifier le statut de couverture
+## Step 3 — Identify the coverage status
 
-Pour comprendre si on apparaît sur le prompt parent de chaque fan-out :
+To understand whether we appear on the parent prompt of each fan-out:
 
-`list_prompts(projectId, limit: 100)` — récupère les prompts trackés et leurs visibilités
+`list_prompts(projectId, limit: 100)` — retrieve the tracked prompts and their visibilities
 
-Croisement à faire :
-- Pour chaque fan-out, regarde ses `prompts` associés
-- Si **aucun de ces prompts** ne contient notre marque dans ses citations → fan-out **non couvert** (priorité haute)
-- Sinon → fan-out **partiellement couvert**
+Cross-check to do:
+- For each fan-out, look at its associated `prompts`
+- If **none of these prompts** contains our brand in its citations → **uncovered** fan-out (high priority)
+- Otherwise → **partially covered** fan-out
 
-## Étape 4 — Classifier l'intention
+## Step 4 — Classify the intent
 
-Pour chaque fan-out, classe l'intention :
-- **Informationnel** : "qu'est-ce que…", "comment…", "guide…"
-- **Comparatif** : "vs", "comparatif", "alternative à", "meilleur"
-- **Transactionnel** : "prix", "acheter", "tarif", "free trial"
-- **Reviews** : "avis", "review", "retour d'expérience"
+For each fan-out, classify the intent:
+- **Informational**: "what is…", "how to…", "guide…"
+- **Comparative**: "vs", "comparison", "alternative to", "best"
+- **Transactional**: "price", "buy", "pricing", "free trial"
+- **Reviews**: "reviews", "review", "feedback"
 
-## Étape 5 — Calculer un score de priorité
+## Step 5 — Compute a priority score
 
-Score : **fréquence × multiplicateur intent × multiplicateur couverture × multiplicateur fit produit**
+Score: **frequency × intent multiplier × coverage multiplier × product fit multiplier**
 
-- Multiplicateur intent : Comparatif × 1.5, Transactionnel × 1.3, Reviews × 1.2, Informationnel × 1
-- Multiplicateur couverture : Non couvert × 1.5, Partiellement × 1, Couvert × 0.3 (= à exclure)
-- Multiplicateur fit produit (uniquement si `productContext` chargé, sinon 1 partout) : sujet au cœur de la valeur / langage de l'ICP × 1.4, sujet adjacent × 1, sujet périphérique (hors ICP, hors cas d'usage) × 0.6. Juge le fit à partir du problème résolu, des personas et des cas d'usage du `value-proposition.md`.
+- Intent multiplier: Comparative × 1.5, Transactional × 1.3, Reviews × 1.2, Informational × 1
+- Coverage multiplier: Uncovered × 1.5, Partially × 1, Covered × 0.3 (= to exclude)
+- Product fit multiplier (only if `productContext` is loaded, otherwise 1 everywhere): topic at the core of the value / ICP language × 1.4, adjacent topic × 1, peripheral topic (outside the ICP, outside the use cases) × 0.6. Judge the fit from the problem solved, the personas, and the use cases in `value-proposition.md`.
 
-Ajoute une colonne **Fit produit** au tableau du backlog (Fort / Moyen / Faible) quand `productContext` est chargé, pour rendre le facteur lisible.
+Add a **Product fit** column to the backlog table (Strong / Medium / Weak) when `productContext` is loaded, to make the factor readable.
 
-## Étape 6 — Produire le backlog
+## Step 6 — Produce the backlog
 
 ---
 
-# Backlog éditorial GEO — [Nom du projet]
+# GEO Editorial Backlog — [Project name]
 
-> Issu de N fan-outs analysés · Filtre appliqué : [$ARGUMENTS ou "aucun"]
+> From N fan-outs analyzed · Filter applied: [$ARGUMENTS or "none"]
 
-## Top 20 sujets prioritaires
+## Top 20 priority topics
 
-| # | Sujet (fan-out) | Intent | Fréquence | LLMs concernés | Statut | Score |
+| # | Topic (fan-out) | Intent | Frequency | LLMs involved | Status | Score |
 |---|---|---|---|---|---|---|
 
-Tri par score décroissant. Format `Sujet` = la requête fan-out telle quelle (titre d'article potentiel).
+Sort by descending score. Format `Topic` = the fan-out query as is (potential article title).
 
-## Répartition par intent
+## Breakdown by intent
 
-| Intent | Nb sujets prioritaires | Nb cumulés |
+| Intent | # priority topics | Cumulative # |
 |---|---|---|
 
-## Répartition par LLM
+## Breakdown by LLM
 
-Quels LLMs sont les plus exigeants ?
+Which LLMs are the most demanding?
 
-| LLM | Fan-outs uniques | Sujets non couverts |
+| LLM | Unique fan-outs | Uncovered topics |
 |---|---|---|
 
-## 5 sujets à attaquer en priorité (synthèse)
+## 5 topics to attack first (synthesis)
 
-Pour chaque sujet du top 5 du backlog, justifie en 2 lignes :
-- Pourquoi ce sujet (intent + LLMs touchés)
-- Format suggéré (article comparatif, guide, page produit, étude de cas, etc.)
-- Slash command pour aller plus loin : `/mentionable-brief "<le fan-out>"`
+For each topic in the backlog's top 5, justify in 2 lines:
+- Why this topic (intent + LLMs affected)
+- Suggested format (comparison article, guide, product page, case study, etc.)
+- Slash command to go further: `/mentionable-brief "<the fan-out>"`
 
 ---
 
-## Règles strictes
+## Strict rules
 
-- **Le sujet d'article = le fan-out tel quel** : on ne reformule pas, on attaque la requête réelle du LLM
-- **Exclure les fan-outs déjà couverts** sauf si le score reste très élevé
-- **Détecter les doublons sémantiques** : si 3 fan-outs disent la même chose, regrouper et sommer les fréquences
-- **Pas d'invention** : ne pas inventer de fan-outs non présents dans la liste
-- **Tone exec** : factuel, pas de prose marketing
+- **The article topic = the fan-out as is**: we do not reword, we attack the LLM's real query
+- **Exclude already-covered fan-outs** unless the score stays very high
+- **Detect semantic duplicates**: if 3 fan-outs say the same thing, group them and sum the frequencies
+- **No invention**: do not invent fan-outs not present in the list
+- **Exec tone**: factual, no marketing prose

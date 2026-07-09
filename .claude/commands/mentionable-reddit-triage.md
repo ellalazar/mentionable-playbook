@@ -1,102 +1,106 @@
 ---
-description: Triage hebdo des threads Reddit cités par les LLMs — ranking, enrichissement, recommandation
-argument-hint: [subreddit-optionnel]
+description: Weekly triage of Reddit threads cited by LLMs — ranking, enrichment, recommendation
+argument-hint: [optional-subreddit]
 ---
 
-Tu es un community / SEO senior. Tu dois **trier les threads Reddit cités par les LLMs** pour identifier ceux qui valent un commentaire (impact GEO) et marquer le reste comme traité.
+You are a senior community / SEO specialist. You must **triage the Reddit threads cited by the LLMs** to identify those worth a comment (GEO impact) and mark the rest as handled.
 
-Argument fourni : `$ARGUMENTS` (filtre optionnel sur un subreddit, ex : "r/SaaS")
+## Output language
 
-## Étape 1 — Identifier le projet
+Produce everything the end user reads (the report's headings and prose) in the project's language, read from `language` in `projects/<projectSlug>/.project.json` (default `en` when the field or file is absent). Templates in this command are written in English; if the project language is not English, write all prose in that language while keeping command names, tool names, code, and data identifiers unchanged.
 
-`list_projects()` → `projectId`. Si plusieurs, demander.
+Argument provided: `$ARGUMENTS` (optional filter on a subreddit, e.g. "r/SaaS")
 
-## Étape 2 — Lister les threads NEW
+## Step 1 — Identify the project
+
+`list_projects()` → `projectId`. If several, ask.
+
+## Step 2 — List the NEW threads
 
 `list_reddit_threads(projectId, limit: 50, filters: { status: ["NEW"] }, sortBy: "score_desc")`
 
-Si `$ARGUMENTS` est rempli, ajoute `filters.subredditContains: "$ARGUMENTS"`.
+If `$ARGUMENTS` is filled, add `filters.subredditContains: "$ARGUMENTS"`.
 
-S'il y a 0 résultat NEW, dis-le et termine.
+If there are 0 NEW results, say so and stop.
 
-## Étape 3 — Pré-tri rapide (sans enrichissement)
+## Step 3 — Quick pre-triage (without enrichment)
 
-Avec les signaux GEO bruts (citations, web searches, LLMs touchés, prompt coverage), classe chaque thread en :
-- **Top** (top 20% par score) → candidats à enrichir
-- **Medium** → à garder pour la semaine prochaine
-- **Bas** → SKIPPED en bulk
+With the raw GEO signals (citations, web searches, LLMs affected, prompt coverage), classify each thread as:
+- **Top** (top 20% by score) → candidates to enrich
+- **Medium** → keep for next week
+- **Low** → SKIPPED in bulk
 
-## Étape 4 — Demander confirmation avant enrichissement
+## Step 4 — Ask for confirmation before enrichment
 
-Présente à l'utilisateur :
-- Le nombre de threads Top à enrichir (max 5 recommandé)
-- Le coût en crédits AI (1 crédit par enrichissement, à confirmer avec la doc Mentionable)
-- La liste des threads Bas à marquer SKIPPED (bulk)
+Present to the user:
+- The number of Top threads to enrich (max 5 recommended)
+- The AI credit cost (1 credit per enrichment, to confirm with the Mentionable docs)
+- The list of Low threads to mark SKIPPED (bulk)
 
-Demande : *"Je lance l'enrichissement des N threads top et je marque M threads SKIPPED ?"*
+Ask: *"Shall I run the enrichment of the N top threads and mark M threads SKIPPED?"*
 
-## Étape 5 — Exécuter
+## Step 5 — Execute
 
-Si OK :
-1. Pour chaque thread Top : `enrich_reddit_thread(projectId, redditPostId)`
-2. Polling : `get_reddit_thread(projectId, redditPostId)` toutes les 30s, max 4 min, jusqu'à statut `ENRICHED` ou `DELETED`
-3. Pour les threads Bas : `bulk_update_reddit_thread_status(projectId, updates: [...{status: "SKIPPED"}])` (max 50 par appel)
+If OK:
+1. For each Top thread: `enrich_reddit_thread(projectId, redditPostId)`
+2. Polling: `get_reddit_thread(projectId, redditPostId)` every 30s, max 4 min, until status `ENRICHED` or `DELETED`
+3. For the Low threads: `bulk_update_reddit_thread_status(projectId, updates: [...{status: "SKIPPED"}])` (max 50 per call)
 
-## Étape 6 — Recommandation par thread enrichi
+## Step 6 — Recommendation per enriched thread
 
-Pour chaque thread enrichi avec succès, lis `title`, `body`, `topComments`, `upvotes` et propose :
+For each successfully enriched thread, read `title`, `body`, `topComments`, `upvotes` and propose:
 
-- **Verdict** : "Commenter maintenant" / "Observer" / "Ignorer"
-- **Pourquoi** : 1 ligne factuelle (thread récent, controverse, question ouverte, OP dégoûté du concurrent, etc.)
-- **Angle de commentaire suggéré** : 2-3 lignes, ton authentique, **sans pitch produit direct** (Reddit déteste ça)
-- **Score Reddit** : upvotes + nb commentaires
-- **Signal GEO** : combien de LLMs citent ce thread, sur quels prompts
+- **Verdict**: "Comment now" / "Watch" / "Ignore"
+- **Why**: 1 factual line (recent thread, controversy, open question, OP fed up with the competitor, etc.)
+- **Suggested comment angle**: 2-3 lines, authentic tone, **no direct product pitch** (Reddit hates that)
+- **Reddit score**: upvotes + number of comments
+- **GEO signal**: how many LLMs cite this thread, on which prompts
 
-## Étape 7 — Produire le rapport
+## Step 7 — Produce the report
 
 ---
 
-# Triage Reddit — [Nom du projet]
+# Reddit Triage — [Project name]
 
-> Période : threads NEW à date · Filtre : [$ARGUMENTS ou "aucun"]
+> Period: NEW threads to date · Filter: [$ARGUMENTS or "none"]
 
-## Résumé
+## Summary
 
-- Threads NEW analysés : N
-- Threads enrichis : M
-- Threads SKIPPED en bulk : K
-- Recommandés à commenter : J
+- NEW threads analyzed: N
+- Threads enriched: M
+- Threads SKIPPED in bulk: K
+- Recommended to comment: J
 
-## Threads à commenter (top recommandations)
+## Threads to comment (top recommendations)
 
-Pour chaque thread :
+For each thread:
 
-### [Title du thread]
+### [Thread title]
 
-- **r/[subreddit]** · `[reddit URL]` · upvotes: N · commentaires: M
-- **Signal GEO** : cité par X LLMs sur Y prompts trackés
-- **Verdict** : Commenter maintenant
-- **Pourquoi** : [1 ligne factuelle]
-- **Angle suggéré** :
-  > [proposition de réponse Reddit, 3-5 phrases, ton authentique, pas de pitch direct]
-- **Action après commentaire** : marquer COMMENTED via `/mentionable-reddit-triage --mark-commented [redditPostId]` ou via le dashboard
+- **r/[subreddit]** · `[reddit URL]` · upvotes: N · comments: M
+- **GEO signal**: cited by X LLMs on Y tracked prompts
+- **Verdict**: Comment now
+- **Why**: [1 factual line]
+- **Suggested angle**:
+  > [proposed Reddit reply, 3-5 sentences, authentic tone, no direct pitch]
+- **Action after commenting**: mark COMMENTED via `/mentionable-reddit-triage --mark-commented [redditPostId]` or via the dashboard
 
-## Threads SKIPPED automatiquement
+## Automatically SKIPPED threads
 
-| # | Subreddit | Score | Raison |
+| # | Subreddit | Score | Reason |
 |---|---|---|---|
 
-## Threads à observer (semaine prochaine)
+## Threads to watch (next week)
 
-Liste courte des Medium qu'on n'a pas enrichis cette semaine.
+Short list of the Medium threads we did not enrich this week.
 
 ---
 
-## Règles strictes
+## Strict rules
 
-- **Demander confirmation avant `enrich_reddit_thread`** — c'est payant en crédits AI
-- **Max 5 enrichissements par run** — sauf si l'utilisateur demande explicitement plus
-- **Polling raisonnable** : 30s entre chaque `get_reddit_thread`, max 4 min total par thread
-- **Angle de commentaire jamais promotionnel** : Reddit ban les pitches. Apporte de la valeur, mentionne la marque de manière naturelle (ou pas du tout, parfois c'est mieux)
-- **Si un thread est `DELETED`** sur Reddit : marquer SKIPPED, ne pas perdre de temps
-- **Tone exec / community manager** : factuel sur le diagnostic, naturel sur l'angle
+- **Ask for confirmation before `enrich_reddit_thread`** — it costs AI credits
+- **Max 5 enrichments per run** — unless the user explicitly asks for more
+- **Reasonable polling**: 30s between each `get_reddit_thread`, max 4 min total per thread
+- **Comment angle never promotional**: Reddit bans pitches. Bring value, mention the brand naturally (or not at all, sometimes that is better)
+- **If a thread is `DELETED`** on Reddit: mark SKIPPED, do not waste time
+- **Exec / community manager tone**: factual on the diagnosis, natural on the angle

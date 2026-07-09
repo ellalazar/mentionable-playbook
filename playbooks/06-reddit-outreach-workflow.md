@@ -1,140 +1,140 @@
-# Playbook 06 — Triage Reddit hebdo
+# Playbook 06 — Weekly Reddit triage
 
-> Reddit est sur-représenté dans les sources LLM (ChatGPT en particulier).
-> Cette commande trie les threads cités par les LLMs, te dit lesquels valent un commentaire, et nettoie le reste.
+> Reddit is over-represented in LLM sources (ChatGPT in particular).
+> This command triages the threads cited by the LLMs, tells you which ones are worth a comment, and cleans up the rest.
 
-## Objectif
+## Goal
 
-Workflow hebdomadaire de **triage des opportunités Reddit** : ranking, enrichissement (scraping Bright Data) sélectif, recommandation d'angle de commentaire, et marquage en bulk du reste.
+A weekly workflow for **triaging Reddit opportunities**: ranking, selective enrichment (Bright Data scraping), a recommended comment angle, and bulk-marking the rest.
 
-## Pour qui
+## Who it's for
 
-- **Community manager / growth** qui pilote la présence Reddit
-- **SEO in-house / agence** qui cherche des leviers GEO différenciants
-- **Founder de SaaS** qui fait du community-led GEO
+- **Community manager / growth** running the Reddit presence
+- **In-house SEO / agency** looking for differentiating GEO levers
+- **SaaS founder** doing community-led GEO
 
-## Pré-requis
+## Prerequisites
 
-- MCP Mentionable installé
-- Tracking Mentionable activé depuis 7+ jours (pour avoir des threads détectés)
-- Crédits AI disponibles (l'enrichissement Bright Data en consomme)
-- Compte Reddit avec un peu d'historique (les comptes neufs se font ban)
+- Mentionable MCP installed
+- Mentionable tracking active for 7+ days (to have detected threads)
+- AI credits available (Bright Data enrichment consumes them)
+- A Reddit account with some history (brand-new accounts get banned)
 
-## Tools MCP utilisés
+## MCP tools used
 
 - `list_projects`, `list_reddit_threads`
-- `enrich_reddit_thread` — scraping Bright Data (asynchrone, payant)
+- `enrich_reddit_thread` — Bright Data scraping (asynchronous, paid)
 - `get_reddit_thread` — polling
-- `bulk_update_reddit_thread_status` — nettoyage en bulk
+- `bulk_update_reddit_thread_status` — bulk cleanup
 
-## Sur Claude Code
+## On Claude Code
 
 ```
 /mentionable-reddit-triage
 ```
 
-Avec un filtre subreddit :
+With a subreddit filter:
 
 ```
 /mentionable-reddit-triage SaaS
 /mentionable-reddit-triage entrepreneur
 ```
 
-## Sur Cursor / Claude Desktop / autre client
+## On Cursor / Claude Desktop / another client
 
 ```text
-Tu es un community / SEO senior. Trie les threads Reddit cités par les LLMs.
+You are a senior community / SEO expert. Triage the Reddit threads cited by the LLMs.
 
 1. list_projects() → projectId
 2. list_reddit_threads(projectId, filters.status: ["NEW"], limit: 50, sortBy: "score_desc")
-   [si filtre subreddit : filters.subredditContains: "<sub>"]
-3. Pré-tri sans enrichissement : Top (20%) / Medium / Bas
-4. Demande-moi confirmation avant d'enrichir (max 5 threads, c'est payant)
-5. Pour les Top : enrich_reddit_thread, puis poll get_reddit_thread toutes les 30s (max 4 min)
-6. Pour les Bas : bulk_update_reddit_thread_status(updates: [...{status: "SKIPPED"}])
-7. Pour chaque thread enrichi : lis title/body/topComments et propose verdict + angle de commentaire (non promotionnel)
+   [if subreddit filter: filters.subredditContains: "<sub>"]
+3. Pre-sort without enrichment: Top (20%) / Medium / Low
+4. Ask me for confirmation before enriching (max 5 threads, it's paid)
+5. For the Top: enrich_reddit_thread, then poll get_reddit_thread every 30s (max 4 min)
+6. For the Low: bulk_update_reddit_thread_status(updates: [...{status: "SKIPPED"}])
+7. For each enriched thread: read title/body/topComments and propose a verdict + comment angle (non-promotional)
 
-Rends un rapport :
-- Résumé (analysés, enrichis, skipped, à commenter)
-- Threads à commenter (titre, sub, signal GEO, verdict, angle suggéré 3-5 phrases)
-- Threads SKIPPED automatiquement
-- Threads à observer la semaine prochaine
+Return a report:
+- Summary (analyzed, enriched, skipped, to comment)
+- Threads to comment (title, sub, GEO signal, verdict, suggested angle 3-5 sentences)
+- Automatically SKIPPED threads
+- Threads to watch next week
 
-Règles : confirmation avant enrichissement (payant), angle jamais promo, tone authentique.
+Rules: confirmation before enrichment (paid), angle never promotional, authentic tone.
 ```
 
-## Exemple de livrable
+## Sample deliverable
 
 ```markdown
-# Triage Reddit — Acme SaaS
+# Reddit triage — Acme SaaS
 
-> Période : threads NEW à date · Filtre : aucun
+> Period: NEW threads as of today · Filter: none
 
-## Résumé
+## Summary
 
-- Threads NEW analysés : 27
-- Threads enrichis : 4
-- Threads SKIPPED en bulk : 18
-- Recommandés à commenter : 3
+- NEW threads analyzed: 27
+- Threads enriched: 4
+- Threads SKIPPED in bulk: 18
+- Recommended to comment: 3
 
-## Threads à commenter
+## Threads to comment
 
 ### "Looking for an alternative to CompetitorA — fed up with their pricing changes"
 
-- **r/[subreddit]** · `https://reddit.com/r/.../comments/abc123/...` · upvotes: 142 · commentaires: 67
-- **Signal GEO** : cité par 3 LLMs sur 4 prompts trackés
-- **Verdict** : Commenter maintenant
-- **Pourquoi** : OP cherche activement une alternative, thread chaud (24h), 67 commentaires = audience engagée
-- **Angle suggéré** :
-  > "On a fait la même bascule il y a 6 mois. CompetitorA est solide mais le pricing par seat devient vite douloureux dès qu'on dépasse 20 users. On utilise [notre marque] depuis et le delta principal c'est [bénéfice concret], par contre on a perdu [petite contrepartie honnête]. Si tu veux je peux te détailler ce qui m'a vraiment manqué pendant la migration."
-- **Action après commentaire** : marquer COMMENTED dans le dashboard
+- **r/[subreddit]** · `https://reddit.com/r/.../comments/abc123/...` · upvotes: 142 · comments: 67
+- **GEO signal**: cited by 3 LLMs across 4 tracked prompts
+- **Verdict**: Comment now
+- **Why**: OP is actively looking for an alternative, hot thread (24h), 67 comments = engaged audience
+- **Suggested angle**:
+  > "We made the same switch 6 months ago. CompetitorA is solid but the per-seat pricing gets painful fast once you go past 20 users. We've been on [our brand] since then and the main difference is [concrete benefit], though we did give up [small honest trade-off]. Happy to walk you through what I actually missed during the migration if that helps."
+- **Action after commenting**: mark COMMENTED in the dashboard
 
-### "What's the ROI of [catégorie] for a 10-person team?"
+### "What's the ROI of [category] for a 10-person team?"
 
-- **r/SaaS** · upvotes: 89 · commentaires: 34
-- **Signal GEO** : cité par 2 LLMs sur 2 prompts trackés
-- **Verdict** : Commenter maintenant
-- **Pourquoi** : question ouverte, intent transactionnel, faible compétition de réponses qualitatives
-- **Angle suggéré** :
-  > "Pour 10 personnes c'est souvent à partir du moment où tu passes plus de 2h par semaine sur [tâche manuelle X]. On a calculé chez nous : 4h/semaine × 4 semaines × taux horaire = X €. À partir de là n'importe quel outil dans la fourchette 50-150 €/mois rentabilise. Le vrai sujet c'est plutôt [point qualité]."
+- **r/SaaS** · upvotes: 89 · comments: 34
+- **GEO signal**: cited by 2 LLMs across 2 tracked prompts
+- **Verdict**: Comment now
+- **Why**: open question, transactional intent, little competition from quality answers
+- **Suggested angle**:
+  > "For 10 people it usually pays off once you're spending more than 2h a week on [manual task X]. We ran the numbers here: 4h/week × 4 weeks × hourly rate = $X. Past that point, any tool in the $50-150/month range pays for itself. The real question is more about [quality point]."
 
-### "Self-hosted [catégorie] vs cloud — what would you choose in 2026?"
+### "Self-hosted [category] vs cloud — what would you choose in 2026?"
 
-- **r/selfhosted** · upvotes: 203 · commentaires: 91
-- **Signal GEO** : cité par 4 LLMs sur 3 prompts trackés
-- **Verdict** : Commenter maintenant
-- **Pourquoi** : énorme audience (203 upvotes), thread evergreen sur sujet fan-out fort
-- **Angle suggéré** :
-  > "Self-hosted en 2026 a du sens dans 3 cas précis : conformité strictes, équipes très techniques, ou usage à très haut volume. En dehors, les coûts cachés (RGPD, backups, maintenance versions) dépassent vite le SaaS équivalent. J'ai documenté un calcul là-dessus si ça t'intéresse."
+- **r/selfhosted** · upvotes: 203 · comments: 91
+- **GEO signal**: cited by 4 LLMs across 3 tracked prompts
+- **Verdict**: Comment now
+- **Why**: huge audience (203 upvotes), evergreen thread on a strong fan-out topic
+- **Suggested angle**:
+  > "Self-hosted in 2026 makes sense in 3 specific cases: strict compliance, very technical teams, or very high-volume usage. Outside of those, the hidden costs (GDPR, backups, version maintenance) quickly outweigh the equivalent SaaS. I documented a calculation on this if you're interested."
 
-## Threads SKIPPED automatiquement
+## Automatically SKIPPED threads
 
-| # | Subreddit | Score | Raison |
+| # | Subreddit | Score | Reason |
 |---|---|---|---|
-| 1 | r/[autre] | 12 | thread vieux de 8 mois, 0 LLM citation récente |
-| 2 | r/[autre] | 4 | upvotes faibles, 1 LLM seulement |
-| ... | | | (18 entrées au total) |
+| 1 | r/[other] | 12 | thread 8 months old, no recent LLM citation |
+| 2 | r/[other] | 4 | low upvotes, 1 LLM only |
+| ... | | | (18 entries total) |
 
-## Threads à observer la semaine prochaine
+## Threads to watch next week
 
-- "Best [catégorie] for solopreneurs in 2026" (r/Entrepreneur, upvotes 56)
-- "Migration from [outil] to [autre]" (r/[sub], upvotes 38)
-- (4 autres entrées)
+- "Best [category] for solopreneurs in 2026" (r/Entrepreneur, upvotes 56)
+- "Migration from [tool] to [other]" (r/[sub], upvotes 38)
+- (4 other entries)
 ```
 
-## Variantes
+## Variants
 
-- **Triage par subreddit** : `/mentionable-reddit-triage SaaS` pour cibler un sub spécifique
-- **Triage approfondi** : "enrichis 10 threads au lieu de 5" — coûte plus cher en crédits
-- **Triage sans enrichissement** : "ne fais pas d'enrichissement, juste le ranking sur les signaux bruts" — gratuit
-- **Mode rétro** : "regarde les threads COMMENTED des 30 derniers jours et donne-moi un retour sur l'impact GEO" — utile pour reporting
+- **Triage by subreddit**: `/mentionable-reddit-triage SaaS` to target a specific sub
+- **Deeper triage**: "enrich 10 threads instead of 5" — costs more in credits
+- **Triage without enrichment**: "don't enrich, just rank on the raw signals" — free
+- **Retro mode**: "look at the COMMENTED threads from the last 30 days and give me feedback on the GEO impact" — useful for reporting
 
-## Aller plus loin
+## Going further
 
-- [Reverse engineering d'un concurrent qui domine sur Reddit](03-reverse-engineering-concurrents.md)
-- [Reporting hebdo intégrant les actions Reddit](08-reporting-hebdo-geo.md)
+- [Reverse engineering a competitor that dominates on Reddit](03-reverse-engineering-concurrents.md)
+- [Weekly report including Reddit actions](08-reporting-hebdo-geo.md)
 
-## Notes éthiques
+## Ethical notes
 
-- Reddit a des règles strictes contre la promotion. **Apporter de la valeur d'abord**, mentionner sa marque seulement si pertinent, et **divulguer son affiliation** si on est employé/founder.
-- Un compte avec 0 historique qui débarque pour pitcher un produit = ban immédiat. Travaille un compte avec des contributions réelles avant d'utiliser ce playbook.
+- Reddit has strict rules against promotion. **Add value first**, mention your brand only if relevant, and **disclose your affiliation** if you're an employee/founder.
+- An account with 0 history that shows up to pitch a product = instant ban. Build up an account with real contributions before using this playbook.

@@ -1,282 +1,286 @@
 ---
-description: Stratégie pilier + satellites depuis un seed keyword (DataForSEO) enrichie avec le signal LLM (MCP Mentionable)
+description: Pillar + satellites strategy from a seed keyword (DataForSEO) enriched with the LLM signal (Mentionable MCP)
 argument-hint: <seed keyword>
 allowed-tools: Bash, Read, Write, AskUserQuestion
 ---
 
-Tu es un stratège SEO + GEO. À partir du seed keyword `$ARGUMENTS`, tu produis un plan éditorial actionnable **pilier + satellites** qui croise le signal SERP (DataForSEO) avec le signal LLM (MCP Mentionable). L'objectif : des pages qui rankent à la fois sur la SERP Google **et** dans les réponses des LLMs.
+You are an SEO + GEO strategist. From the seed keyword `$ARGUMENTS`, you produce an actionable **pillar + satellites** editorial plan that crosses the SERP signal (DataForSEO) with the LLM signal (Mentionable MCP). The goal: pages that rank both on the Google SERP **and** in LLM answers.
 
-Si `$ARGUMENTS` est vide, demande à l'utilisateur le seed keyword.
+## Output language
 
-## Pré-requis (vérifier au tout début, une seule fois)
+Produce everything the end user reads (the deliverable's headings and prose) in the project's language, read from `language` in `projects/<projectSlug>/.project.json` (default `en` when the field or file is absent). Templates in this command are written in English; if the project language is not English, write all prose in that language while keeping command names, tool names, code, and data identifiers unchanged.
 
-1. `package.json` à la racine et dossier `node_modules` présent. Si absent → `npm install`.
-2. Fichier `.env` à la racine avec `DATAFORSEO_LOGIN` et `DATAFORSEO_PASSWORD`. Si absent → indique à l'utilisateur de copier `.env.example` en `.env` et de remplir ses credentials (voir [docs/dataforseo-setup.md](../../docs/dataforseo-setup.md)).
-3. MCP Mentionable installé (les tools `list_projects`, `list_fan_outs`, `list_competitors`, `list_llm_sources` doivent être disponibles). Si absent → indique [docs/getting-started.md](../../docs/getting-started.md).
+If `$ARGUMENTS` is empty, ask the user for the seed keyword.
+
+## Prerequisites (check at the very start, once)
+
+1. `package.json` at the root and a `node_modules` folder present. If missing → `npm install`.
+2. `.env` file at the root with `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD`. If missing → tell the user to copy `.env.example` to `.env` and fill in their credentials (see [docs/dataforseo-setup.md](../../docs/dataforseo-setup.md)).
+3. Mentionable MCP installed (the tools `list_projects`, `list_fan_outs`, `list_competitors`, `list_llm_sources` must be available). If missing → point to [docs/getting-started.md](../../docs/getting-started.md).
 4. Node ≥ 18 (`node --version`).
 
-Si l'un manque, arrête et explique clairement la commande à exécuter.
+If any is missing, stop and clearly explain the command to run.
 
-## Étape 1 — Sélection du projet Mentionable
+## Step 1 — Select the Mentionable project
 
-Avant de lancer le pipeline DataForSEO (qui consomme des crédits), confirme le projet sur lequel on va croiser le signal LLM.
+Before launching the DataForSEO pipeline (which consumes credits), confirm the project against which you will cross the LLM signal.
 
-### Mode A — Avec `--from-cluster <path>` (recommandé si tu viens de `/mentionable-clusters`)
+### Mode A — With `--from-cluster <path>` (recommended if you're coming from `/mentionable-clusters`)
 
-Si `$ARGUMENTS` contient `--from-cluster projects/<slug>/discovery/<date>/clusters.json#cluster-N` :
+If `$ARGUMENTS` contains `--from-cluster projects/<slug>/discovery/<date>/clusters.json#cluster-N`:
 
-1. Extrais `projectSlug` du path et `clusterId` du fragment `#cluster-N`.
-2. Lis `projects/<projectSlug>/.project.json` → `projectId`, `projectName`.
-3. Lis `projects/<projectSlug>/discovery/<date>/clusters.json`, trouve le cluster dont l'`id` matche `clusterId`.
-4. Stocke en mémoire les champs du cluster : `theme`, `intent`, `fanOuts`, `promptIds`, `seedSuggested`.
-5. Si `$ARGUMENTS` ne contient pas de seed keyword positionnel, **utilise `seedSuggested` du cluster comme seed**.
-6. Passe directement à l'étape 2.
+1. Extract `projectSlug` from the path and `clusterId` from the `#cluster-N` fragment.
+2. Read `projects/<projectSlug>/.project.json` → `projectId`, `projectName`.
+3. Read `projects/<projectSlug>/discovery/<date>/clusters.json`, find the cluster whose `id` matches `clusterId`.
+4. Store the cluster's fields in memory: `theme`, `intent`, `fanOuts`, `promptIds`, `seedSuggested`.
+5. If `$ARGUMENTS` does not contain a positional seed keyword, **use the cluster's `seedSuggested` as the seed**.
+6. Go directly to step 2.
 
-Bénéfices : skip de la sélection projet, réutilisation des fan-outs déjà collectés (étape 4 enrichie sans nouveau call MCP), traçabilité du cluster source dans le `plan.md` généré.
+Benefits: skip the project selection, reuse the already-collected fan-outs (step 4 enriched without a new MCP call), traceability of the source cluster in the generated `plan.md`.
 
-### Mode B — Sans `--from-cluster` (sélection interactive)
+### Mode B — Without `--from-cluster` (interactive selection)
 
-1. `list_projects()` → liste des projets.
-2. **Si un seul projet** : utilise-le, affiche son nom pour confirmation visuelle et continue.
-3. **Si plusieurs projets** : utilise `AskUserQuestion` pour faire choisir l'utilisateur (label = nom du projet, description = domaine principal si dispo). Pas de "Other" — l'utilisateur doit choisir parmi les projets existants.
-4. **Si zéro projet** : arrête et indique à l'utilisateur de créer un projet sur [app.mentionable.ai](https://app.mentionable.ai) avant de relancer.
+1. `list_projects()` → list of projects.
+2. **If a single project**: use it, display its name for visual confirmation and continue.
+3. **If multiple projects**: use `AskUserQuestion` to let the user choose (label = project name, description = main domain if available). No "Other" — the user must choose among the existing projects.
+4. **If zero projects**: stop and tell the user to create a project on [app.mentionable.ai](https://app.mentionable.ai) before re-running.
 
-### Communs aux deux modes
+### Common to both modes
 
-Stocke `projectId`, `projectName` et calcule `projectSlug` (kebab-case du nom, sans accents, max 60 char) — réutilisés en étapes 2, 4, 5, 6.
+Store `projectId`, `projectName` and compute `projectSlug` (kebab-case of the name, no accents, max 60 chars) — reused in steps 2, 4, 5, 6.
 
-**Contexte produit (si disponible)** : avec `Read`, vérifie si `projects/<projectSlug>/value-proposition.md` existe. S'il existe, lis-le (`productContext` = problème résolu, USP, ICP / personas, cas d'usage, concurrents nommés). Tu t'en serviras à l'étape de synthèse du `plan.md` pour : (1) vérifier que le pilier sert bien l'ICP, (2) **prioriser les satellites alignés sur les cas d'usage et personas du produit**, (3) signaler les satellites SERP-only hors ICP comme « trafic mais faible intention d'achat ». S'il n'existe pas, continue sans (priorisation par signal SERP × LLM seul).
+**Product context (if available)**: with `Read`, check whether `projects/<projectSlug>/value-proposition.md` exists. If it does, read it (`productContext` = problem solved, USP, ICP / personas, use cases, named competitors). You'll use it in the `plan.md` synthesis step to: (1) verify that the pillar truly serves the ICP, (2) **prioritize satellites aligned with the product's use cases and personas**, (3) flag SERP-only satellites outside the ICP as "traffic but low purchase intent". If it doesn't exist, continue without it (prioritization by SERP × LLM signal alone).
 
-Tu peux aussi conseiller `/mentionable-clusters` à l'utilisateur en amont s'il n'a pas encore exploré les fan-outs du projet : c'est la commande dédiée pour transformer le signal LLM brut en seeds prêts à passer ici.
+You can also recommend `/mentionable-clusters` to the user beforehand if they haven't yet explored the project's fan-outs: it's the dedicated command for turning the raw LLM signal into seeds ready to pass here.
 
-## Étape 2 — Pipeline DataForSEO
+## Step 2 — DataForSEO pipeline
 
-Lance le script depuis la racine du repo en passant le `projectSlug` :
+Run the script from the repo root, passing the `projectSlug`:
 
 ```bash
 npm run pillar -- "$ARGUMENTS" --project-slug <projectSlug>
 ```
 
-Le script écrit `./projects/<projectSlug>/pillars/<seedSlug>/brief.json` contenant :
-- `pillar` : mot-clé pilier retenu, volume, KD, longueur cible, top 10 SERP avec domaines, termes sémantiques partagés, échantillon de headings concurrents
-- `satellites` : clusters groupés par intent et theme, avec leurs articles candidats (titre, volume, KD)
+The script writes `./projects/<projectSlug>/pillars/<seedSlug>/brief.json` containing:
+- `pillar`: chosen pillar keyword, volume, KD, target length, top 10 SERP with domains, shared semantic terms, sample of competitor headings
+- `satellites`: clusters grouped by intent and theme, with their candidate articles (title, volume, KD)
 
-> **Convention de stockage** : tout ce qui concerne un projet Mentionable vit sous `projects/<projectSlug>/` (`.project.json`, `pillars/`, `articles/`). Cf. README.
+> **Storage convention**: everything related to a Mentionable project lives under `projects/<projectSlug>/` (`.project.json`, `pillars/`, `articles/`). See README.
 
-Récupère le `slug` (seed-slug) affiché dans la sortie du script. Le dossier de travail pour la suite est `./projects/<projectSlug>/pillars/<slug>/`.
+Retrieve the `slug` (seed-slug) shown in the script's output. The working directory for the rest is `./projects/<projectSlug>/pillars/<slug>/`.
 
-Si le fichier `./projects/<projectSlug>/.project.json` n'existe pas, crée-le maintenant avec le Write tool :
+If the file `./projects/<projectSlug>/.project.json` does not exist, create it now with the Write tool:
 
 ```json
 {
   "projectId": "<projectId>",
   "projectName": "<projectName>",
-  "projectUrl": "<url du projet si dispo>",
+  "projectUrl": "<project url if available>",
   "createdAt": "<ISO date>"
 }
 ```
 
-Ce fichier permet aux commandes downstream (`/mentionable-article`, `/mentionable-images`) de retrouver le projet Mentionable sans re-demander.
+This file lets downstream commands (`/mentionable-article`, `/mentionable-images`) find the Mentionable project without re-asking.
 
-## Étape 3 — Lis le brief
+## Step 3 — Read the brief
 
-`Read ./projects/<projectSlug>/pillars/<slug>/brief.json` — c'est ta source de vérité pour la suite. Note :
-- `pillar.targetKeyword` (le mot-clé pilier)
-- `pillar.top10Serp[].domain` (liste des domaines à croiser en étape 4)
-- `satellites[].theme` (chaque theme va être enrichi en étape 4)
+`Read ./projects/<projectSlug>/pillars/<slug>/brief.json` — this is your source of truth for the rest. Note:
+- `pillar.targetKeyword` (the pillar keyword)
+- `pillar.top10Serp[].domain` (list of domains to cross in step 4)
+- `satellites[].theme` (each theme will be enriched in step 4)
 
-## Étape 4 — Cross-signal A : demande LLM par cluster (`list_fan_outs`)
+## Step 4 — Cross-signal A: LLM demand per cluster (`list_fan_outs`)
 
-Tu as déjà `projectId` depuis l'étape 1. **Pour chaque cluster satellite** (et pour le pilier lui-même), lance :
+You already have `projectId` from step 1. **For each satellite cluster** (and for the pillar itself), run:
 
-> **Mode `--from-cluster`** : tu as déjà les fan-outs en mémoire (cluster source). Tu peux **skip** les call `list_fan_outs(search: theme_du_cluster_source)` pour ce thème central et utiliser directement les fan-outs en mémoire. Continue à appeler `list_fan_outs` pour les *autres* clusters DataForSEO qui n'étaient pas dans le cluster source, pour ne pas perdre de signal.
+> **`--from-cluster` mode**: you already have the fan-outs in memory (source cluster). You can **skip** the `list_fan_outs(search: source_cluster_theme)` call for that central theme and use the in-memory fan-outs directly. Keep calling `list_fan_outs` for the *other* DataForSEO clusters that weren't in the source cluster, so you don't lose signal.
 
 ```
-list_fan_outs(projectId, filters: { search: "<theme du cluster>" }, limit: 20, sortBy: "frequency")
+list_fan_outs(projectId, filters: { search: "<cluster theme>" }, limit: 20, sortBy: "frequency")
 ```
 
-Lance les calls **en parallèle** (un seul message, N tool calls). Pour chaque cluster note :
-- `fanOutsMatched` : nombre de fan-outs trouvés
-- `cumulativeFrequency` : somme des fréquences
-- `llmsConcerned` : union des LLMs qui surfacent ces fan-outs
-- `promptIds` : ids parents (réutilisés en étape 5)
+Run the calls **in parallel** (a single message, N tool calls). For each cluster note:
+- `fanOutsMatched`: number of fan-outs found
+- `cumulativeFrequency`: sum of frequencies
+- `llmsConcerned`: union of the LLMs that surface these fan-outs
+- `promptIds`: parent ids (reused in step 5)
 
-Tag chaque cluster :
-- `double_demande` si `cumulativeFrequency ≥ 5` → priorité haute (volume Google **et** demande LLM)
-- `serp_only` si `fanOutsMatched == 0` → SEO classique, pas de pari GEO
-- `geo_dominant` si volume Google faible mais fanOutsMatched élevé → pari GEO pur (rare)
+Tag each cluster:
+- `double_demande` if `cumulativeFrequency ≥ 5` → high priority (Google volume **and** LLM demand)
+- `serp_only` if `fanOutsMatched == 0` → classic SEO, no GEO bet
+- `geo_dominant` if low Google volume but high fanOutsMatched → pure GEO bet (rare)
 
-## Étape 5 — Cross-signal B : concurrents SERP vs concurrents LLM (`list_competitors`)
+## Step 5 — Cross-signal B: SERP competitors vs LLM competitors (`list_competitors`)
 
-Un seul call :
+A single call:
 
 ```
 list_competitors(projectId, limit: 30, filters: { status: ["CONFIRMED"] }, sortBy: "mentions_desc")
 ```
 
-Récupère le set de domaines (`competitor.domain` normalisé sans `www.`).
+Retrieve the set of domains (`competitor.domain` normalized without `www.`).
 
-Pour chaque URL du `pillar.top10Serp`, pose un flag :
-- `llmStatus = "✓"` si le domaine est dans le set des concurrents LLM
-- `llmStatus = "✗"` sinon
+For each URL in `pillar.top10Serp`, set a flag:
+- `llmStatus = "✓"` if the domain is in the set of LLM competitors
+- `llmStatus = "✗"` otherwise
 
-Calcule deux signaux globaux :
-- `hegemonicCount` : nb de domaines top 10 SERP qui sont aussi top concurrents LLM → si ≥ 4, la niche est verrouillée des 2 côtés
-- `serpOnlyCount` : nb de domaines top 10 SERP **absents** des concurrents LLM → opportunité GEO sur le pilier
+Compute two global signals:
+- `hegemonicCount`: number of top 10 SERP domains that are also top LLM competitors → if ≥ 4, the niche is locked on both sides
+- `serpOnlyCount`: number of top 10 SERP domains **absent** from the LLM competitors → GEO opportunity on the pillar
 
-## Étape 6 — Cross-signal C : sources d'autorité à citer (`list_llm_sources`)
+## Step 6 — Cross-signal C: authority sources to cite (`list_llm_sources`)
 
-Agrège tous les `promptIds` collectés en étape 4 (déduplique). Lance :
+Aggregate all the `promptIds` collected in step 4 (deduplicate). Run:
 
 ```
-list_llm_sources(projectId, filters: { promptIds: [...tous-les-promptIds] }, limit: 30, sortBy: "appearances_desc")
+list_llm_sources(projectId, filters: { promptIds: [...all-promptIds] }, limit: 30, sortBy: "appearances_desc")
 ```
 
-Retiens les **8 domaines** les plus cités par les LLMs sur ces prompts. Ce sont les sources d'autorité que les articles (pilier + satellites) devront citer en outbound pour ressembler aux pages que les LLMs trustent déjà.
+Keep the **8 domains** most cited by the LLMs on these prompts. These are the authority sources that the articles (pillar + satellites) will need to cite in outbound to resemble the pages the LLMs already trust.
 
-Si zéro `promptIds` collectés (aucun fan-out trouvé en étape 4), saute cette étape et indique-le dans le rapport.
+If zero `promptIds` were collected (no fan-out found in step 4), skip this step and note it in the report.
 
-## Étape 7 — Recalcul du score satellite
+## Step 7 — Recompute the satellite score
 
-Pour chaque cluster satellite :
+For each satellite cluster:
 
 ```
 score_final = score_dataforseo × (1 + 0.5 × min(cumulativeFrequency / 10, 2))
 ```
 
-(Le score DataForSEO de base = `totalVolume × (100 − KD_moyen) / 100`. Si KD non dispo, prends 50.)
+(The base DataForSEO score = `totalVolume × (100 − avg_KD) / 100`. If KD isn't available, use 50.)
 
-Retri les satellites par `score_final` décroissant.
+Re-sort the satellites by descending `score_final`.
 
-## Étape 8 — Produis le plan markdown
+## Step 8 — Produce the markdown plan
 
-Écris `./projects/<projectSlug>/pillars/<slug>/plan.md` avec cette structure exacte. **Pas de lorem ipsum** — titres réels, ancres réelles, domaines réels extraits des données.
+Write `./projects/<projectSlug>/pillars/<slug>/plan.md` with this exact structure. **No lorem ipsum** — real titles, real anchors, real domains extracted from the data.
 
 ```markdown
-# Stratégie SEO + GEO : <seed>
+# SEO + GEO strategy: <seed>
 
-> Projet Mentionable : `<projectName>` · Loc <LOCATION_CODE> · Lang <LANGUAGE_CODE> · Généré le <date> · `npm run pillar -- "<seed>"`
-> Source : <si --from-cluster, path du clusters.json#cluster-N ; sinon "seed direct">.
+> Mentionable project: `<projectName>` · Loc <LOCATION_CODE> · Lang <LANGUAGE_CODE> · Generated on <date> · `npm run pillar -- "<seed>"`
+> Source: <if --from-cluster, path of clusters.json#cluster-N; otherwise "direct seed">.
 
 ## TL;DR
 
-- **Pilier retenu** : `<targetKeyword>` (vol=<volume>, KD=<difficulty>, intent=<intent>)
-- **<N> clusters satellites** (<X> à double demande SERP+LLM, <Y> SERP-only)
-- **Niche LLM** : <hegemonicCount>/10 domaines du top SERP dominent aussi les LLMs → [verrouillée / mixte / ouverte]
-- **Prochaine action** : <satellite #1 ou pilier — voir roadmap>
+- **Chosen pillar**: `<targetKeyword>` (vol=<volume>, KD=<difficulty>, intent=<intent>)
+- **<N> satellite clusters** (<X> with dual SERP+LLM demand, <Y> SERP-only)
+- **LLM niche**: <hegemonicCount>/10 top-SERP domains also dominate the LLMs → [locked / mixed / open]
+- **Next action**: <satellite #1 or pillar — see roadmap>
 
-## 🏛️ Article pilier
+## 🏛️ Pillar article
 
-- **Mot-clé cible** : `<targetKeyword>` · volume=<vol> · KD=<kd> · intent=<intent>
-- **Longueur cible** : <targetWordCount> mots (concurrents = <avgWordCount> en moyenne)
-- **Demande LLM** : <cumulativeFrequency> fan-outs cumulés sur <N> LLMs (<liste>)
+- **Target keyword**: `<targetKeyword>` · volume=<vol> · KD=<kd> · intent=<intent>
+- **Target length**: <targetWordCount> words (competitors = <avgWordCount> on average)
+- **LLM demand**: <cumulativeFrequency> cumulative fan-outs across <N> LLMs (<list>)
 
-### Plan H1 + H2/H3 proposé
+### Proposed H1 + H2/H3 outline
 
-Couvrir les termes sémantiques requis et répondre aux fan-outs LLM trouvés.
+Cover the required semantic terms and answer the LLM fan-outs found.
 
-- H1 : <reformulation du targetKeyword en titre éditorial>
-- H2 — <section 1 inspirée des concurrents>
-  - H3 — <sous-section>
-- ... (vise 6-10 H2, dont une H2 "FAQ")
+- H1: <reformulation of the targetKeyword as an editorial title>
+- H2 — <section 1 inspired by competitors>
+  - H3 — <sub-section>
+- ... (aim for 6-10 H2s, including one "FAQ" H2)
 
-### Top 10 SERP — qui est dominant aussi en LLM ?
+### Top 10 SERP — who also dominates in LLMs?
 
-| Rank | Domaine | URL | LLM | Mots |
+| Rank | Domain | URL | LLM | Words |
 |---|---|---|---|---|
 | 1 | <domain> | <url> | <✓/✗> | <wordCount> |
 | ... | | | | |
 
-**Lecture** : <hegemonicCount> domaines SERP sont aussi tops LLM (ennemis double-front). <serpOnlyCount> sont SERP-only (opportunité GEO).
+**Reading**: <hegemonicCount> SERP domains are also LLM tops (dual-front enemies). <serpOnlyCount> are SERP-only (GEO opportunity).
 
-### Sources d'autorité à citer en outbound
+### Authority sources to cite in outbound
 
-Domaines que les LLMs lisent réellement pour ce type de requête — citer 4-6 en outbound :
+Domains the LLMs actually read for this type of query — cite 4-6 in outbound:
 
-| Domaine | Apparitions LLM | Pourquoi |
+| Domain | LLM appearances | Why |
 |---|---|---|
 
-### Termes sémantiques à intégrer
+### Semantic terms to integrate
 
-<liste comma-separated de pillar.semanticTermsToCover>
+<comma-separated list of pillar.semanticTermsToCover>
 
-### Angles différenciants (vs top 10 SERP)
+### Differentiating angles (vs top 10 SERP)
 
-3 angles que les concurrents ne traitent PAS, déduits de `competitorHeadingsSample` :
+3 angles the competitors do NOT cover, deduced from `competitorHeadingsSample`:
 
 - <angle 1>
 - <angle 2>
 - <angle 3>
 
-## 🛰️ Pack satellites
+## 🛰️ Satellite pack
 
-Trié par `score_final` décroissant.
+Sorted by descending `score_final`.
 
-### Satellite #1 — <theme> [<tag : double_demande / serp_only / geo_dominant>]
+### Satellite #1 — <theme> [<tag: double_demande / serp_only / geo_dominant>]
 
-- **Intent** : <intent>
-- **Volume cumulé** : <totalVolume>
-- **Demande LLM** : <cumulativeFrequency> fan-outs · LLMs : <liste>
-- **Score final** : <score>
-- **Articles candidats** :
+- **Intent**: <intent>
+- **Cumulative volume**: <totalVolume>
+- **LLM demand**: <cumulativeFrequency> fan-outs · LLMs: <list>
+- **Final score**: <score>
+- **Candidate articles**:
 
-  | Titre / mot-clé | Volume | KD |
+  | Title / keyword | Volume | KD |
   |---|---|---|
   | <keyword> | <vol> | <kd> |
 
-- **Angle éditorial** : <1 phrase>
-- **Sources à citer** : <2-3 depuis l'étape 5>
+- **Editorial angle**: <1 sentence>
+- **Sources to cite**: <2-3 from step 5>
 
 ### Satellite #2 — ...
 
-(répéter pour chaque cluster, tri par score_final)
+(repeat for each cluster, sorted by score_final)
 
-## 🔗 Maillage interne
+## 🔗 Internal linking
 
-- **Schéma** : chaque satellite → lien vers le pilier (ancre = variation sémantique de `<targetKeyword>`)
-- **Cross-links** : satellites de même intent se citent entre eux quand pertinent
-- **Section dédiée dans le pilier** : H2 "Pour aller plus loin" qui renvoie vers les N satellites avec ancre descriptive
-- **Ancres recommandées** (échantillon) :
-  - Pilier ← Satellite "<theme>" : "<ancre concrète>"
+- **Scheme**: each satellite → link to the pillar (anchor = semantic variation of `<targetKeyword>`)
+- **Cross-links**: satellites of the same intent cite each other when relevant
+- **Dedicated section in the pillar**: an H2 "Going further" pointing to the N satellites with descriptive anchors
+- **Recommended anchors** (sample):
+  - Pillar ← Satellite "<theme>": "<concrete anchor>"
   - ...
 
-## 📋 Roadmap de production
+## 📋 Production roadmap
 
-**Ordre** : <pilier-first | satellites-first>
+**Order**: <pillar-first | satellites-first>
 
-Justification :
-- Si `hegemonicCount ≥ 4` ET le pilier est KD-difficile (>50) → **satellites-first** sur les 2-3 clusters double_demande pour construire l'autorité avant d'attaquer le pilier
-- Sinon → **pilier-first** (centralise l'autorité, puis les satellites maillent vers lui)
+Rationale:
+- If `hegemonicCount ≥ 4` AND the pillar is KD-hard (>50) → **satellites-first** on the 2-3 double_demande clusters to build authority before attacking the pillar
+- Otherwise → **pillar-first** (centralizes authority, then the satellites link toward it)
 
-| Ordre | Article | Cluster | Score | Pourquoi |
+| Order | Article | Cluster | Score | Why |
 |---|---|---|---|---|
-| 1 | <titre> | <theme ou "pilier"> | <score> | <raison> |
+| 1 | <title> | <theme or "pillar"> | <score> | <reason> |
 | ... | | | | |
 
-## Chaînage suggéré
+## Suggested chaining
 
-Pour aller plus loin, lance :
-- `/mentionable-brief "<satellite #1 mot-clé>"` — brief détaillé du premier article à produire
-- `/mentionable-content-gap` — matche les fan-outs non couverts par ce plan
-- `/mentionable-images <chemin-article.md>` — illustrations une fois l'article rédigé
+To go further, run:
+- `/mentionable-brief "<satellite #1 keyword>"` — detailed brief for the first article to produce
+- `/mentionable-content-gap` — matches the fan-outs not covered by this plan
+- `/mentionable-images <path-to-article.md>` — illustrations once the article is written
 ```
 
-## Étape 9 — Résumé final dans le chat
+## Step 9 — Final summary in chat
 
-Affiche en 3 bullets :
+Show in 3 bullets:
 
 ```
-✅ Plan généré : ./projects/<projectSlug>/pillars/<slug>/plan.md
-   - Projet Mentionable : "<projectName>"
-   - Pilier : "<targetKeyword>" (vol=X, KD=Y)
-   - <N> satellites prioritaires dont <X> à double demande SERP+LLM
-   - Next : /mentionable-article ./projects/<projectSlug>/pillars/<slug>
+✅ Plan generated: ./projects/<projectSlug>/pillars/<slug>/plan.md
+   - Mentionable project: "<projectName>"
+   - Pillar: "<targetKeyword>" (vol=X, KD=Y)
+   - <N> priority satellites, of which <X> with dual SERP+LLM demand
+   - Next: /mentionable-article ./projects/<projectSlug>/pillars/<slug>
 ```
 
-## Règles strictes
+## Strict rules
 
-- **Pas d'invention** : tous les domaines, fan-outs, concurrents, sources doivent venir des données réelles (DataForSEO + MCP). Si la donnée manque, signale-le explicitement dans le plan plutôt que d'inventer.
-- **Calls MCP en parallèle quand possible** : un seul message avec N tool calls pour les `list_fan_outs` de l'étape 4.
-- **Slug stable** : utilise toujours le slug renvoyé par le script — ne pas le re-générer.
-- **Confirme avant relancer DataForSEO** : si `./projects/<projectSlug>/pillars/<slug>/brief.json` existe déjà, demande si on relance le pipeline (chaque run coûte des crédits DataForSEO) ou si on repart du fichier existant.
-- **Tone exec, factuel** : pas de prose marketing, pas de superlatifs.
+- **No invention**: every domain, fan-out, competitor, source must come from real data (DataForSEO + MCP). If data is missing, flag it explicitly in the plan rather than inventing.
+- **MCP calls in parallel when possible**: a single message with N tool calls for the `list_fan_outs` of step 4.
+- **Stable slug**: always use the slug returned by the script — do not re-generate it.
+- **Confirm before re-running DataForSEO**: if `./projects/<projectSlug>/pillars/<slug>/brief.json` already exists, ask whether to re-run the pipeline (each run costs DataForSEO credits) or work from the existing file.
+- **Exec, factual tone**: no marketing prose, no superlatives.

@@ -1,32 +1,32 @@
 # Getting started
 
-5 minutes pour avoir le MCP Mentionable connecté à ton agent IA et lancer ta première commande.
+5 minutes to get the Mentionable MCP connected to your AI agent and run your first command.
 
-## 1. Créer un compte Mentionable
+## 1. Create a Mentionable account
 
-1. Inscription sur [mentionable.ai](https://mentionable.ai)
-2. Crée un projet (ton site, ton produit, ton client)
-3. Ajoute quelques prompts à tracker (5-20 pour démarrer)
-4. Laisse Mentionable collecter des données pendant 24-48h
+1. Sign up at [mentionable.ai](https://mentionable.ai)
+2. Create a project (your site, your product, your client)
+3. Add a few prompts to track (5-20 to start)
+4. Let Mentionable collect data for 24-48h
 
-> Sans données collectées, le MCP renverra des résultats vides — patience le temps du premier run.
+> Without collected data, the MCP will return empty results — be patient while the first run happens.
 
-## 2. Récupérer ta clé API
+## 2. Get your API key
 
-Dans Mentionable → Settings → API → Create new key.
+In Mentionable → Settings → API → Create new key.
 
-Garde-la précieusement, elle ne s'affiche qu'une fois.
+Keep it safe; it's only shown once.
 
-## 3. Connecter le MCP
+## 3. Connect the MCP
 
-Le MCP Mentionable est compatible avec **tout client supportant MCP** : Claude Code, Cursor, Claude Desktop, Codex CLI, etc.
+The Mentionable MCP works with **any client that supports MCP**: Claude Code, Cursor, Claude Desktop, Codex CLI, etc.
 
-Deux méthodes d'authentification sont disponibles :
+Two authentication methods are available:
 
-- **A. Header `Authorization` (recommandée)** — plus propre, plus sûre
-- **B. Clé en query string (`?key=...`)** — fallback simple si la config par header te bloque
+- **A. `Authorization` header (recommended)** — cleaner, safer
+- **B. Key in query string (`?key=...`)** — simple fallback if header config gives you trouble
 
-### Méthode A — Auth par header (recommandée)
+### Method A — Header auth (recommended)
 
 #### Claude Code
 
@@ -37,7 +37,7 @@ claude mcp add mentionable \
   --header "Authorization: Bearer $MENTIONABLE_API_KEY"
 ```
 
-Vérifie l'installation :
+Check the installation:
 
 ```bash
 claude mcp list
@@ -45,7 +45,7 @@ claude mcp list
 
 #### Cursor
 
-Ajoute dans `.cursor/mcp.json` :
+Add to `.cursor/mcp.json`:
 
 ```json
 {
@@ -62,7 +62,7 @@ Ajoute dans `.cursor/mcp.json` :
 
 #### Claude Desktop
 
-Ajoute dans `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) ou `%APPDATA%\Claude\claude_desktop_config.json` (Windows) :
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
 ```json
 {
@@ -77,15 +77,15 @@ Ajoute dans `~/Library/Application Support/Claude/claude_desktop_config.json` (m
 }
 ```
 
-Redémarre Claude Desktop.
+Restart Claude Desktop.
 
-### Méthode B — Auth par query string (fallback simple)
+### Method B — Query string auth (simple fallback)
 
-**Tutoriel vidéo** — setup MCP Mentionable sur Claude (web / desktop) et ChatGPT via clé en URL :
+**Video tutorial** — setting up the Mentionable MCP on Claude (web / desktop) and ChatGPT via a key in the URL:
 
-[![Tutoriel : setup MCP Mentionable via clé en URL](https://img.youtube.com/vi/C1EbdAnwRRo/maxresdefault.jpg)](https://youtu.be/C1EbdAnwRRo?si=peBBhagn_e_e_rzj)
+[![Tutorial: setting up the Mentionable MCP via a key in the URL](https://img.youtube.com/vi/C1EbdAnwRRo/maxresdefault.jpg)](https://youtu.be/C1EbdAnwRRo?si=peBBhagn_e_e_rzj)
 
-Si tu galères avec la config par header (variable d'env qui ne se charge pas, fichier de conf qui n'est pas pris en compte, client qui ignore les `headers`), tu peux passer ta clé directement dans l'URL :
+If you're struggling with the header config (an env variable that won't load, a config file that isn't picked up, a client that ignores `headers`), you can pass your key directly in the URL:
 
 ```
 https://mentionable.ai/api/mcp?key=YOUR_API_KEY
@@ -123,60 +123,59 @@ claude mcp add mentionable \
 }
 ```
 
-> **Attention** : avec la méthode B, ta clé API se retrouve en clair dans le fichier de conf et potentiellement dans des logs. À éviter sur les machines partagées. **Ne jamais committer un fichier de conf qui contient cette URL** — vérifie ton `.gitignore`.
+> **Warning**: with method B, your API key ends up in cleartext in the config file and potentially in logs. Avoid it on shared machines. **Never commit a config file that contains this URL** — check your `.gitignore`.
 
-## 4. Cloner ce repo
+## 4. Clone this repo
 
 ```bash
 git clone https://github.com/mentionable-ai/mentionable-playbook.git
 cd mentionable-playbook
 ```
 
-Si tu utilises Claude Code, les **slash commands** dans `.claude/commands/` sont automatiquement détectées dès que tu lances Claude Code dans ce dossier.
+If you use Claude Code, the **slash commands** in `.claude/commands/` are detected automatically as soon as you launch Claude Code in this folder.
 
-## 5. Premier appel
+## 5. First call
 
-Deux points d'entrée selon ce que tu veux faire :
+Two entry points, depending on what you want to do:
 
-### A. Diagnostiquer un projet existant
+### A. Diagnose an existing project
 
 ```
 /mentionable-audit
 ```
 
-Si tu as plusieurs projets, précise lequel :
+If you have several projects, specify which one:
 
 ```
-/mentionable-audit nom-de-mon-projet
+/mentionable-audit my-project-name
 ```
 
-### B. Démarrer une production de contenu
+### B. Start a content production run
 
 ```
 /mentionable-clusters
 ```
 
-Cette commande clusterise les fan-outs LLM par thème + intent et produit un fichier `clusters.json` qui sert de passerelle vers `/mentionable-pillar` puis `/mentionable-article`. C'est le point d'entrée du workflow complet (cf. [README.md](../README.md#workflow-complet--du-signal-llm-à-larticle-publié)).
+This command clusters LLM fan-outs by topic + intent and produces a `clusters.json` file that acts as the bridge to `/mentionable-pillar` then `/mentionable-article`. It's the entry point of the full workflow (see [README.md](../README.md#full-workflow-from-llm-signal-to-published-article)).
 
-### Sur autre client (Cursor, Claude Desktop, etc.)
+### On another client (Cursor, Claude Desktop, etc.)
 
-Ouvre [`playbooks/01-audit-geo-initial.md`](../playbooks/01-audit-geo-initial.md), copie le prompt, colle-le dans ton chat. L'agent va appeler les tools MCP et te rendre l'audit. Chaque autre playbook fonctionne de la même façon.
+Open [`playbooks/01-audit-geo-initial.md`](../playbooks/01-audit-geo-initial.md), copy the prompt, and paste it into your chat. The agent will call the MCP tools and hand you back the audit. Every other playbook works the same way.
 
-## Vérifier que ça marche
+## Check that it works
 
-Si tu obtiens un rapport markdown structuré, c'est gagné.
+If you get a structured markdown report, you're set.
 
-Si tu obtiens une erreur :
+If you get an error:
 
-- `**No projects found**` : le MCP est connecté mais ta clé API ne voit aucun projet → vérifie le workspace lié à la clé
-- `**Unauthorized**` : la clé API est invalide ou expirée → régénère-la
-- `**Tool not found**` : le MCP n'est pas chargé → vérifie `claude mcp list` ou redémarre ton client
+- `**No projects found**`: the MCP is connected but your API key sees no project → check the workspace linked to the key
+- `**Unauthorized**`: the API key is invalid or expired → regenerate it
+- `**Tool not found**`: the MCP isn't loaded → check `claude mcp list` or restart your client
 
-## Pour la suite
+## What's next
 
-- Lis les [concepts GEO](concepts.md) si tu débutes
-- Parcours la [reference des tools](tools-reference.md)
-- Explore les [12 playbooks](../playbooks/) — diagnostic, production de contenu (pilier + satellites + articles GEO + images), outreach, reporting
-- Pour produire du contenu : suis le [workflow complet recommandé](../README.md#workflow-complet--du-signal-llm-à-larticle-publié) (clusters → pillar → article → images)
-- Configure les pré-requis pour les commandes avancées : [DataForSEO](dataforseo-setup.md) (pour `/mentionable-pillar`), [Gemini](images-setup.md) (pour `/mentionable-images`)
-
+- Read the [GEO concepts](concepts.md) if you're getting started
+- Browse the [tools reference](tools-reference.md)
+- Explore the [12 playbooks](../playbooks/) — diagnostics, content production (pillar + satellites + GEO articles + images), outreach, reporting
+- To produce content: follow the [recommended full workflow](../README.md#full-workflow-from-llm-signal-to-published-article) (clusters → pillar → article → images)
+- Configure the prerequisites for the advanced commands: [DataForSEO](dataforseo-setup.md) (for `/mentionable-pillar`), [Gemini](images-setup.md) (for `/mentionable-images`)

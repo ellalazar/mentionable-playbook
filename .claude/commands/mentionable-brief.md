@@ -1,116 +1,120 @@
 ---
-description: Brief d'article complet à partir d'un fan-out — outline, FAQ, sources à citer/dépasser
-argument-hint: <fan-out ou sujet d'article>
+description: Complete article brief from a fan-out — outline, FAQ, sources to cite/outrank
+argument-hint: <fan-out or article topic>
 ---
 
-Tu es un stratège contenu GEO. Tu dois produire un **brief d'article complet et prêt à rédiger** à partir d'un fan-out (ou sujet d'article).
+You are a GEO content strategist. You must produce a **complete, ready-to-write article brief** from a fan-out (or article topic).
 
-Argument fourni : `$ARGUMENTS` (le fan-out ou sujet, requis)
+## Output language
 
-Si `$ARGUMENTS` est vide, demande à l'utilisateur le sujet à briefer (idéalement issu de `/mentionable-content-gap`).
+Produce everything the end user reads (the report's headings and prose) in the project's language, read from `language` in `projects/<projectSlug>/.project.json` (default `en` when the field or file is absent). Templates in this command are written in English; if the project language is not English, write all prose in that language while keeping command names, tool names, code, and data identifiers unchanged.
 
-## Étape 1 — Identifier le projet et le fan-out
+Argument provided: `$ARGUMENTS` (the fan-out or topic, required)
 
-1. `list_projects()` → `projectId`, `projectName`. Calcule `projectSlug` (kebab-case du nom, sans accents).
-2. **Contexte produit (si disponible)** : avec `Read`, vérifie si `projects/<projectSlug>/value-proposition.md` existe. S'il existe, lis-le : c'est la **source de vérité produit** (`productContext` = one-liner, problème, USP / différenciateurs, ICP / personas, concurrents nommés, bénéfices, périmètre). Tu t'en serviras aux sections « Angles différenciants », « Signal GEO » et pour orienter l'intent/format vers l'ICP. S'il n'existe pas, continue sans.
-3. `list_fan_outs(projectId, filters: { search: "$ARGUMENTS" }, limit: 20)` — retrouve le fan-out exact et ses prompts associés
-4. Note la fréquence, les LLMs concernés, et les `promptIds` parents
+If `$ARGUMENTS` is empty, ask the user for the topic to brief (ideally coming from `/mentionable-content-gap`).
 
-## Étape 2 — Cartographier les sources existantes
+## Step 1 — Identify the project and the fan-out
 
-Pour comprendre ce que les LLMs lisent déjà sur ce sujet :
+1. `list_projects()` → `projectId`, `projectName`. Compute `projectSlug` (kebab-case of the name, without accents).
+2. **Product context (if available)**: with `Read`, check whether `projects/<projectSlug>/value-proposition.md` exists. If it exists, read it: it is the **product source of truth** (`productContext` = one-liner, problem, USP / differentiators, ICP / personas, named competitors, benefits, scope). You will use it in the "Differentiating angles" and "GEO signal" sections and to steer intent/format toward the ICP. If it does not exist, continue without it.
+3. `list_fan_outs(projectId, filters: { search: "$ARGUMENTS" }, limit: 20)` — find the exact fan-out and its associated prompts
+4. Note the frequency, the LLMs involved, and the parent `promptIds`
 
-`list_llm_sources(projectId, limit: 50, filters: { promptIds: [...promptIds-trouvés] }, sortBy: "appearances_desc")`
+## Step 2 — Map the existing sources
 
-→ Liste des domaines que les LLMs consultent pour répondre à ce type de requête.
+To understand what the LLMs already read on this topic:
 
-## Étape 3 — Identifier les concurrents qui ressortent
+`list_llm_sources(projectId, limit: 50, filters: { promptIds: [...promptIds-found] }, sortBy: "appearances_desc")`
+
+→ List of the domains the LLMs consult to answer this type of query.
+
+## Step 3 — Identify the competitors that stand out
 
 `list_competitors(projectId, limit: 10, filters: { status: ["CONFIRMED"] }, sortBy: "mentions_desc")`
 
-Note les 3-5 concurrents les plus présents, qu'on devra dépasser ou citer.
+Note the 3-5 most present competitors, the ones we will have to outrank or cite.
 
-## Étape 4 — Pour chaque concurrent dominant, ses URLs précises
+## Step 4 — For each dominant competitor, its precise URLs
 
-Pour le top 3 concurrents :
+For the top 3 competitors:
 `list_competitor_sources(projectId, competitorId, limit: 10, sortBy: "mentions_desc")`
 
-Note les URLs précises citées (les `topUrls`) pour chaque concurrent → ce sont les pages à dépasser.
+Note the precise URLs cited (the `topUrls`) for each competitor → these are the pages to outrank.
 
-## Étape 5 — Produire le brief
+## Step 5 — Produce the brief
 
 ---
 
-# Brief d'article — [titre de l'article basé sur le fan-out]
+# Article Brief — [article title based on the fan-out]
 
-> Sujet basé sur le fan-out : *"$ARGUMENTS"*
-> Fréquence : N · LLMs concernés : [liste]
+> Topic based on the fan-out: *"$ARGUMENTS"*
+> Frequency: N · LLMs involved: [list]
 
-## 1. Méta
+## 1. Meta
 
-- **Titre H1 proposé** : [reformulation accrocheuse du fan-out]
-- **Slug suggéré** : `/[slug]`
-- **Méta-description** (155 car max) : [proposition]
-- **Intent** : informationnel / comparatif / transactionnel / reviews
-- **Format** : article long / page comparative / guide / landing
+- **Proposed H1 title**: [catchy rewrite of the fan-out]
+- **Suggested slug**: `/[slug]`
+- **Meta description** (155 chars max): [proposal]
+- **Intent**: informational / comparative / transactional / reviews
+- **Format**: long-form article / comparison page / guide / landing
 
 ## 2. Outline (H2/H3)
 
-Structure recommandée. Inspirée des sources qui ressortent dans les LLMs sur ce type de requête :
+Recommended structure. Inspired by the sources that stand out in the LLMs for this type of query:
 
 - ## H2 — [section 1]
-  - ### H3 — [sous-section]
-  - ### H3 — [sous-section]
+  - ### H3 — [subsection]
+  - ### H3 — [subsection]
 - ## H2 — [section 2]
   - ### H3 — ...
 - ## H2 — [section 3]
 - ## H2 — FAQ
 
-Vise 6-10 H2. Chaque H2 doit répondre à une **question implicite** du fan-out.
+Aim for 6-10 H2s. Each H2 must answer an **implicit question** from the fan-out.
 
-## 3. FAQ à inclure
+## 3. FAQ to include
 
-5-8 questions issues des fan-outs sémantiquement proches. Format :
+5-8 questions from semantically close fan-outs. Format:
 
-- **Q : [question]** — réponse en 2-3 phrases
+- **Q: [question]** — answer in 2-3 sentences
 - ...
 
-## 4. Sources à citer (autorité)
+## 4. Sources to cite (authority)
 
-| Domaine | Pourquoi | URL spécifique si connue |
+| Domain | Why | Specific URL if known |
 |---|---|---|
 
-Domaines à citer = sources que les LLMs consultent pour ce type de requête (extraites étape 2). Cibler 4-6 sources d'autorité.
+Domains to cite = sources the LLMs consult for this type of query (extracted in step 2). Target 4-6 authority sources.
 
-## 5. Sources à dépasser (concurrents)
+## 5. Sources to outrank (competitors)
 
-| Concurrent | Page concurrente | Faiblesse à exploiter |
+| Competitor | Competitor page | Weakness to exploit |
 |---|---|---|
 
-Liste les URLs précises où les concurrents apparaissent. Pour chaque, propose une faiblesse à exploiter (page datée, manque de profondeur, absence de FAQ, etc.).
+List the precise URLs where the competitors appear. For each, propose a weakness to exploit (dated page, lack of depth, no FAQ, etc.).
 
-## 6. Angles différenciants (3 max)
+## 6. Differentiating angles (3 max)
 
-Comment se démarquer dans les réponses LLM :
-- Donnée originale (étude, benchmark, enquête)
-- Format unique (calculator, framework, template téléchargeable)
-- Posture éditoriale (avis tranché, prise de position)
+How to stand out in the LLM answers:
+- Original data (study, benchmark, survey)
+- Unique format (calculator, framework, downloadable template)
+- Editorial stance (strong opinion, take a position)
 
-Si `productContext` est chargé : ancre au moins un angle sur un **vrai différenciateur produit** (USP de `value-proposition.md`) et propose un **angle de CTA** cohérent avec le périmètre honnête du produit.
+If `productContext` is loaded: anchor at least one angle on a **real product differentiator** (USP from `value-proposition.md`) and propose a **CTA angle** consistent with the product's honest scope.
 
-## 7. Signal GEO
+## 7. GEO signal
 
-Mots-clés / entités à inclure pour maximiser les chances d'être cité :
-- Entités produit : [marque, concurrents, technologies] — si `productContext` est chargé, reprends la marque et les concurrents nommés dans `value-proposition.md`
-- Entités contexte : [secteur, géo, taille d'entreprise] — alignées sur l'ICP / les personas du `productContext`
-- Données chiffrées à inclure
+Keywords / entities to include to maximize the chances of being cited:
+- Product entities: [brand, competitors, technologies] — if `productContext` is loaded, reuse the brand and the competitors named in `value-proposition.md`
+- Context entities: [industry, geo, company size] — aligned with the ICP / personas from `productContext`
+- Quantified data to include
 
 ---
 
-## Règles strictes
+## Strict rules
 
-- **Le titre = le fan-out reformulé** : ne pas s'éloigner de la requête réelle
-- **Outline alignée sur l'intent** : un comparatif a 3-5 H2 produits + tableau, un guide a une progression pédagogique, etc.
-- **Sources citées et dépassées factuelles** : extraites des données MCP, pas inventées
-- **Pas de jargon SEO inutile** : le brief doit être lisible par un rédacteur freelance
-- **Tone exec / éditorial** : précis, sans superlatifs
+- **The title = the reworded fan-out**: do not stray from the real query
+- **Outline aligned with intent**: a comparison has 3-5 product H2s + a table, a guide has an educational progression, etc.
+- **Cited and outranked sources are factual**: extracted from the MCP data, not invented
+- **No useless SEO jargon**: the brief must be readable by a freelance writer
+- **Exec / editorial tone**: precise, no superlatives

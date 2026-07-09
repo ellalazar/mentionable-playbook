@@ -1,153 +1,153 @@
-# Playbook 08 — Reporting hebdo client
+# Playbook 08 — Weekly client report
 
-> Le reporting que tu envoies tous les lundis matin à ton client.
-> Court, factuel, avec un TL;DR en 3 lignes et 3 actions claires pour la semaine.
+> The report you send your client every Monday morning.
+> Short, factual, with a 3-line TL;DR and 3 clear actions for the week.
 
-## Objectif
+## Goal
 
-Produire un **reporting GEO hebdomadaire** prêt à envoyer au client : évolutions clés de la semaine, nouveaux signaux, et 3 actions priorisées pour la semaine suivante.
+Produce a **weekly GEO report** ready to send to the client: the week's key changes, new signals, and 3 prioritized actions for the following week.
 
-## Pour qui
+## Who it's for
 
-- **Consultant SEO freelance** qui livre un reporting client récurrent
-- **Agence SEO** qui automatise les reportings sur N clients
-- **SEO in-house** qui rend des comptes au CMO ou au CEO
+- **Freelance SEO consultant** delivering a recurring client report
+- **SEO agency** automating reports across N clients
+- **In-house SEO** reporting to the CMO or CEO
 
-## Pré-requis
+## Prerequisites
 
-- MCP Mentionable installé
-- Projet avec 2+ semaines de tracking (sans ça, pas de comparaison)
-- Idéalement : un reporting de la semaine précédente à fournir en contexte (pour les Δ)
+- Mentionable MCP installed
+- A project with 2+ weeks of tracking (without it, no comparison)
+- Ideally: the previous week's report provided as context (for the Δ)
 
-## Tools MCP utilisés
+## MCP tools used
 
 - `list_projects`
-- `list_prompts` — état courant
+- `list_prompts` — current state
 - `list_competitors` — Share of Voice
-- `list_llm_sources` (avec `dateRange` sur 7 jours)
-- `list_fan_outs` (sortBy: recent) — détection des nouveaux
+- `list_llm_sources` (with `dateRange` over 7 days)
+- `list_fan_outs` (sortBy: recent) — detect new ones
 
-## Sur Claude Code
+## In Claude Code
 
 ```
 /mentionable-weekly
-/mentionable-weekly nom-du-projet
+/mentionable-weekly project-name
 ```
 
-À combiner avec `/loop` ou `/schedule` pour une exécution automatique :
+Combine with `/loop` or `/schedule` for automatic execution:
 
 ```
-/schedule chaque lundi 9h /mentionable-weekly nom-du-projet
+/schedule every Monday 9am /mentionable-weekly project-name
 ```
 
-## Sur Cursor / Claude Desktop / autre client
+## In Cursor / Claude Desktop / another client
 
 ```text
-Tu es un consultant GEO senior. Produis un reporting hebdo client.
+You are a senior GEO consultant. Produce a weekly client report.
 
-Période : 7 derniers jours · Période de comparaison : 7 jours précédents.
+Period: last 7 days · Comparison period: previous 7 days.
 
 1. list_projects() → projectId
-2. En parallèle :
+2. In parallel:
    - list_prompts(projectId, limit: 100)
    - list_competitors(projectId, filters.status: ["CONFIRMED"], limit: 20, sortBy: "mentions_desc")
-   - list_llm_sources(projectId, limit: 50, filters.dateRange: { from: "J-7", to: "now" })
+   - list_llm_sources(projectId, limit: 50, filters.dateRange: { from: "D-7", to: "now" })
    - list_fan_outs(projectId, limit: 50, sortBy: "recent")
 
-3. Détecte :
-   - Nouveaux fan-outs (firstSeen >= J-7)
-   - Nouveaux domaines (premier appearance dans la fenêtre)
-   - Nouveaux concurrents SUGGESTED
-   - Évolutions Share of Voice si comparable
+3. Detect:
+   - New fan-outs (firstSeen >= D-7)
+   - New domains (first appearance in the window)
+   - New SUGGESTED competitors
+   - Share of Voice changes if comparable
 
-Rends un reporting markdown :
-- TL;DR (3 lignes)
-- Visibilité globale (prompts, taux moyen, LLMs)
-- Share of Voice top 5 avec Δ vs S-1
-- Nouveaux signaux (fan-outs, domaines, concurrents suggérés)
-- Top 3 actions semaine prochaine
+Produce a markdown report:
+- TL;DR (3 lines)
+- Overall visibility (prompts, average rate, LLMs)
+- Top 5 Share of Voice with Δ vs W-1
+- New signals (fan-outs, domains, suggested competitors)
+- Top 3 actions for next week
 
-Règles : 1 page max, TL;DR en haut, pas d'invention de Δ, ton exec.
+Rules: 1 page max, TL;DR at the top, don't invent Δ, exec tone.
 ```
 
-## Exemple de livrable
+## Sample deliverable
 
 ```markdown
-# Reporting GEO — Acme SaaS
+# GEO report — Acme SaaS
 
-> Semaine du 23 au 30 avril 2026
+> Week of April 23-30, 2026
 
 ## TL;DR
 
-- SoV global stable à 20%, mais **bond de +6 pts sur Perplexity** (38% → 44%) suite à publication article comparatif
-- Alerte : CompetitorD apparu cette semaine en SUGGESTED avec 11 mentions — à valider avant qu'il monte
-- Action principale semaine prochaine : attaquer Gemini (toujours à 8%) via 2 articles long-form
+- Overall SoV stable at 20%, but **a +6 pt jump on Perplexity** (38% → 44%) following the publication of a comparison article
+- Alert: CompetitorD appeared this week as SUGGESTED with 11 mentions — validate it before it climbs
+- Main action next week: attack Gemini (still at 8%) via 2 long-form articles
 
-## 1. Visibilité globale
+## 1. Overall visibility
 
-- Prompts trackés : 24 (stable)
-- Taux de visibilité moyen : 28% (+2 pts vs S-1)
-- LLMs : ChatGPT 18%, Perplexity 44% (+6), Gemini 8%, Claude 22%, AIO 12%
+- Tracked prompts: 24 (stable)
+- Average visibility rate: 28% (+2 pts vs W-1)
+- LLMs: ChatGPT 18%, Perplexity 44% (+6), Gemini 8%, Claude 22%, AIO 12%
 
 ## 2. Share of Voice — top 5
 
-| Concurrent | Mentions | Δ vs S-1 | Posture |
+| Competitor | Mentions | Δ vs W-1 | Stance |
 |---|---|---|---|
-| CompetitorA | 187 | -3 | leader stable |
-| **Acme SaaS (nous)** | **131** | **+7** | challenger en croissance |
-| CompetitorB | 92 | -6 | challenger en repli |
+| CompetitorA | 187 | -3 | stable leader |
+| **Acme SaaS (us)** | **131** | **+7** | growing challenger |
+| CompetitorB | 92 | -6 | declining challenger |
 | CompetitorC | 67 | 0 | stable |
-| CompetitorD (nouveau) | 11 | +11 | à surveiller |
+| CompetitorD (new) | 11 | +11 | to watch |
 
-## 3. Nouveaux signaux de la semaine
+## 3. New signals this week
 
-### Nouveaux fan-outs détectés
+### New fan-outs detected
 
-| Fan-out | Fréq | LLMs | Couvert ? |
+| Fan-out | Freq | LLMs | Covered? |
 |---|---|---|---|
-| [catégorie] vs CompetitorD comparatif | 8 | 2/5 | non |
-| [catégorie] pour startup early stage | 6 | 3/5 | partiel |
-| meilleurs plugins [catégorie] 2026 | 5 | 2/5 | non |
-| intégration [catégorie] avec [outil tiers] | 4 | 2/5 | non |
-| [catégorie] AI features comparatif | 4 | 3/5 | non |
+| [category] vs CompetitorD comparison | 8 | 2/5 | no |
+| [category] for early-stage startups | 6 | 3/5 | partial |
+| best [category] plugins 2026 | 5 | 2/5 | no |
+| [category] integration with [third-party tool] | 4 | 2/5 | no |
+| [category] AI features comparison | 4 | 3/5 | no |
 
-### Nouveaux domaines dans l'écosystème
+### New domains in the ecosystem
 
-| Domaine | Apparitions | Type |
+| Domain | Appearances | Type |
 |---|---|---|
 | [nouveau-comparateur].com | 7 | cited |
 | [media-startup].fr | 4 | cited |
 | [forum-niche].com | 3 | consulted |
 
-### Nouveaux concurrents suggérés
+### New suggested competitors
 
-| Concurrent | Mentions | À traiter |
+| Competitor | Mentions | To handle |
 |---|---|---|
-| CompetitorD | 11 | Valider statut + lancer reverse engineering |
+| CompetitorD | 11 | Validate status + launch reverse engineering |
 
-## 4. Actions menées la semaine
+## 4. Actions taken this week
 
-- Publication "Top 7 [catégorie] open source 2026" → +6 pts Perplexity confirmés
-- 2 commentaires Reddit (r/SaaS, r/[autre]) → upvotes positifs
-- Audit Trustpilot lancé (résultats S+1)
+- Published "Top 7 open source [category] 2026" → +6 pts on Perplexity confirmed
+- 2 Reddit comments (r/SaaS, r/[other]) → positive upvotes
+- Trustpilot audit launched (results in W+1)
 
-## 5. Top 3 actions semaine prochaine
+## 5. Top 3 actions for next week
 
-1. **Valider CompetitorD et lancer reverse engineering** — un nouveau concurrent à 11 mentions doit être analysé tant qu'il est encore petit — `/mentionable-reverse CompetitorD`
+1. **Validate CompetitorD and launch reverse engineering** — a new competitor at 11 mentions should be analyzed while it's still small — `/mentionable-reverse CompetitorD`
 
-2. **Attaquer Gemini avec 2 briefs** — la stagnation à 8% est notre point faible — `/mentionable-content-gap` filtré sur Gemini puis `/mentionable-brief` sur les 2 fan-outs prioritaires
+2. **Attack Gemini with 2 briefs** — the stall at 8% is our weak spot — `/mentionable-content-gap` filtered on Gemini, then `/mentionable-brief` on the 2 priority fan-outs
 
-3. **Achat backlink ciblé sur [media-startup].fr** — nouveau domaine de l'écosystème, fenêtre d'entrée — `/mentionable-backlinks` sur 1 cible
+3. **Targeted backlink purchase on [media-startup].fr** — new domain in the ecosystem, entry window — `/mentionable-backlinks` on 1 target
 ```
 
-## Variantes
+## Variants
 
-- **Reporting mensuel** : modifie la période en 30 jours, ajoute des graphes de tendance (à dessiner manuellement à partir des données)
-- **Reporting multi-projets (agence)** : "produis un reporting consolidé sur les projets X, Y, Z" — utile pour un compte d'agence avec plusieurs clients
-- **Reporting executive (3 lignes)** : "version ultra condensée, juste TL;DR + 1 action"
-- **Reporting automatique** : `/schedule chaque lundi 9h /mentionable-weekly nom-du-projet` pour le recevoir avant ton client
+- **Monthly report**: change the period to 30 days, add trend charts (to draw manually from the data)
+- **Multi-project report (agency)**: "produce a consolidated report on projects X, Y, Z" — useful for an agency account with several clients
+- **Executive report (3 lines)**: "ultra-condensed version, just TL;DR + 1 action"
+- **Automatic report**: `/schedule every Monday 9am /mentionable-weekly project-name` to get it before your client does
 
-## Aller plus loin
+## Going further
 
-- [Audit GEO complet quand le reporting alerte](01-audit-geo-initial.md)
-- [Reverse engineering quand un nouveau concurrent monte](03-reverse-engineering-concurrents.md)
+- [Full GEO audit when the report raises a flag](01-audit-geo-initial.md)
+- [Reverse engineering when a new competitor rises](03-reverse-engineering-concurrents.md)

@@ -1,67 +1,67 @@
-# Setup — Génération d'images (`/mentionable-images`)
+# Setup — Image generation (`/mentionable-images`)
 
-La commande `/mentionable-images` génère des images d'article (cover, social, illustrations) via l'API **Google Gemini** (`gemini-2.5-flash-image`). Elle est optionnelle — toutes les autres commandes du playbook fonctionnent sans.
+The `/mentionable-images` command generates article images (cover, social, illustrations) via the **Google Gemini** API (`gemini-2.5-flash-image`). It's optional — every other command in the playbook works without it.
 
-## Pré-requis
+## Prerequisites
 
 - **Node.js ≥ 18** (`node --version`)
-- **npm** (livré avec Node)
-- **Clé API Google Gemini** avec billing activé sur le projet
+- **npm** (ships with Node)
+- **Google Gemini API key** with billing enabled on the project
 
-### Pas encore Node.js ?
+### No Node.js yet?
 
-Vérifie d'abord dans un terminal :
+Check first in a terminal:
 
 ```bash
 node --version
 ```
 
-Si ça affiche `v18.x.x` ou plus, tu es bon. Sinon :
+If it shows `v18.x.x` or higher, you're good. Otherwise:
 
-- **macOS** :
-  - Le plus simple : télécharge l'installeur sur https://nodejs.org (choisis "LTS")
-  - Ou via Homebrew : `brew install node`
-- **Windows** :
-  - Télécharge l'installeur sur https://nodejs.org (choisis "LTS")
-  - Ou via winget : `winget install OpenJS.NodeJS.LTS`
-- **Linux (Ubuntu/Debian)** :
-  - `sudo apt install nodejs npm` (vérifie la version, parfois il faut [NodeSource](https://github.com/nodesource/distributions))
+- **macOS**:
+  - Easiest: download the installer from https://nodejs.org (pick "LTS")
+  - Or via Homebrew: `brew install node`
+- **Windows**:
+  - Download the installer from https://nodejs.org (pick "LTS")
+  - Or via winget: `winget install OpenJS.NodeJS.LTS`
+- **Linux (Ubuntu/Debian)**:
+  - `sudo apt install nodejs npm` (check the version; you may need [NodeSource](https://github.com/nodesource/distributions))
 
-Tu n'as **pas besoin** de connaître JavaScript ni de comprendre Node pour utiliser la commande. C'est juste le runtime qui exécute le script de génération d'images en arrière-plan.
+You **don't need** to know JavaScript or understand Node to use the command. It's just the runtime that runs the image-generation script in the background.
 
 ## Installation
 
 ```bash
-# Depuis la racine du repo
+# From the repo root
 npm install
 ```
 
-Cela installe `@google/genai` localement dans `node_modules/`.
+This installs `@google/genai` locally in `node_modules/`.
 
-## Configuration de la clé Gemini
+## Configuring the Gemini key
 
-> 📘 **Walkthrough complet pas-à-pas** : voir [gemini-api-key.md](gemini-api-key.md) (méthode AI Studio + méthode GCP Console + troubleshooting).
+> 📘 **Full step-by-step walkthrough**: see [gemini-api-key.md](gemini-api-key.md) (AI Studio method + GCP Console method + troubleshooting).
 
-Résumé express :
+Quick summary:
 
-1. Va sur https://aistudio.google.com/api-keys
-2. Crée (ou sélectionne) un projet et génère une clé
-3. **Active le billing** sur le projet — le free tier ne permet pas la génération d'images (`limit: 0`)
-4. Copie le fichier d'exemple :
+1. Go to https://aistudio.google.com/api-keys
+2. Create (or select) a project and generate a key
+3. **Enable billing** on the project — the free tier doesn't allow image generation (`limit: 0`)
+4. Copy the example file:
 
 ```bash
 cp .env.example .env
 ```
 
-5. Ouvre `.env` et colle ta clé :
+5. Open `.env` and paste your key:
 
 ```
 GEMINI_API_KEY=AIza...
 ```
 
-> `.env` est ignoré par git — ta clé reste locale.
+> `.env` is ignored by git — your key stays local.
 
-## Vérification
+## Verification
 
 ```bash
 npm run generate:image -- \
@@ -69,60 +69,60 @@ npm run generate:image -- \
   --out articles/test/images/cover.png
 ```
 
-Tu dois voir `✓ articles/test/images/cover.png`. Sinon :
+You should see `✓ articles/test/images/cover.png`. Otherwise:
 
-- `Erreur: GEMINI_API_KEY manquante` → vérifie `.env`
-- `429 — quota dépassé` → active le billing sur ton projet Google AI Studio
-- `Cannot find module '@google/genai'` → lance `npm install`
+- `Erreur: GEMINI_API_KEY manquante` → check `.env`
+- `429 — quota dépassé` → enable billing on your Google AI Studio project
+- `Cannot find module '@google/genai'` → run `npm install`
 
-## Convention de structure des articles
+## Article structure convention
 
-Chaque article vit dans son propre dossier sous `articles/` :
+Each article lives in its own folder under `articles/`:
 
 ```
 articles/
 └── mon-article/
-    ├── index.md        ← contenu de l'article
-    └── images/         ← images générées (créées par la commande)
+    ├── index.md        ← article content
+    └── images/         ← generated images (created by the command)
         ├── 1-cover.png
         ├── 2-illustration.png
         └── prompts.json
 ```
 
-Dans le markdown, référence les images en relatif : `![alt](images/1-cover.png)`.
+In the markdown, reference images relatively: `![alt](images/1-cover.png)`.
 
-## Utilisation depuis Claude Code
+## Using it from Claude Code
 
 ```text
 /mentionable-images articles/mon-article
 ```
 
-ou en passant directement le fichier markdown :
+or by passing the markdown file directly:
 
 ```text
 /mentionable-images articles/mon-article/index.md
 ```
 
-Claude lit l'article, demande combien d'images, quel style et quels types (cover / social / illustration / diagram), construit les prompts, et appelle le script en parallèle. Les images sont écrites dans `articles/<slug>/images/`.
+Claude reads the article, asks how many images, what style, and which types (cover / social / illustration / diagram), builds the prompts, and calls the script in parallel. Images are written to `articles/<slug>/images/`.
 
-## Coût
+## Cost
 
-Chaque image = 1 appel Gemini. Tarif à jour : https://ai.google.dev/gemini-api/docs/pricing
+Each image = 1 Gemini call. Up-to-date pricing: https://ai.google.dev/gemini-api/docs/pricing
 
-## Utilisation hors Claude (CLI directe)
+## Using it outside Claude (direct CLI)
 
-Le script est utilisable seul :
+The script can be used on its own:
 
 ```bash
 npm run generate:image -- \
-  --prompt "<prompt en anglais>" \
+  --prompt "<prompt in English>" \
   --out articles/mon-article/images/cover.png \
   --aspect-ratio 16:9 \
   --model gemini-2.5-flash-image
 ```
 
-Args :
-- `--prompt` (requis) — description de l'image en anglais
-- `--out` (requis) — chemin de sortie `.png`
-- `--aspect-ratio` (optionnel) — défaut `16:9`. Valeurs : `1:1`, `16:9`, `9:16`, `4:3`, `3:4`, `3:2`, `2:3`, `21:9`, `5:4`, `4:5`
-- `--model` (optionnel) — défaut `gemini-2.5-flash-image`
+Args:
+- `--prompt` (required) — image description in English
+- `--out` (required) — output path `.png`
+- `--aspect-ratio` (optional) — default `16:9`. Values: `1:1`, `16:9`, `9:16`, `4:3`, `3:4`, `3:2`, `2:3`, `21:9`, `5:4`, `4:5`
+- `--model` (optional) — default `gemini-2.5-flash-image`

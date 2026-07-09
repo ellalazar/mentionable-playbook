@@ -1,61 +1,61 @@
-# Playbook 09 — Images d'article via Gemini
+# Playbook 09 — Article images via Gemini
 
-> Tu as rédigé un article (ou un brief). Cette commande te génère **les visuels associés** — cover hero, vignette sociale, illustrations inline — via l'API Google Gemini, sans quitter Claude Code.
+> You've written an article (or a brief). This command generates **the accompanying visuals** — hero cover, social thumbnail, inline illustrations — via the Google Gemini API, without leaving Claude Code.
 
-## Objectif
+## Goal
 
-Produire en une commande **1 à N images cohérentes** pour accompagner un article :
-- Cover horizontale 16:9 (hero en haut de page)
-- Vignette carrée 1:1 (LinkedIn, X, OG image)
-- Illustrations inline pour appuyer des sections clés
-- Schémas conceptuels simples (frameworks, comparaisons)
+Produce, in a single command, **1 to N consistent images** to accompany an article:
+- Horizontal 16:9 cover (hero at the top of the page)
+- Square 1:1 thumbnail (LinkedIn, X, OG image)
+- Inline illustrations to support key sections
+- Simple conceptual diagrams (frameworks, comparisons)
 
-Toutes les images d'un même run partagent **une palette et un style** pour rester cohérentes éditorialement.
+All images from the same run share **one palette and one style** to stay editorially consistent.
 
-## Pour qui
+## Who it's for
 
-- **Rédacteurs / content marketers** qui livrent l'article + ses visuels
-- **SEO content** qui veut un visuel d'article rapidement, sans Midjourney ni Canva
-- **Agences** qui industrialisent la production éditoriale GEO
+- **Writers / content marketers** who deliver the article + its visuals
+- **SEO content** people who want an article visual quickly, without Midjourney or Canva
+- **Agencies** industrializing GEO editorial production
 
-## Pré-requis
+## Prerequisites
 
-- **Node.js ≥ 18** + **npm** (install : https://nodejs.org → "LTS" si tu ne l'as pas — pas besoin de connaître JS)
-- **Clé API Google Gemini avec billing activé** (Tier 1) — voir [docs/gemini-api-key.md](../docs/gemini-api-key.md)
-- L'article ou brief source : fichier `.md` local **ou** présent dans la conversation Claude en cours
+- **Node.js ≥ 18** + **npm** (install: https://nodejs.org → "LTS" if you don't have it — no need to know JS)
+- **Google Gemini API key with billing enabled** (Tier 1) — see [docs/gemini-api-key.md](../docs/gemini-api-key.md)
+- The source article or brief: a local `.md` file **or** present in the current Claude conversation
 
-## Setup (une seule fois)
+## Setup (one time only)
 
 ```bash
-# Depuis la racine du repo
+# From the repo root
 npm install
 cp .env.example .env
-# édite .env, colle ta GEMINI_API_KEY
+# edit .env, paste your GEMINI_API_KEY
 ```
 
-Voir [docs/images-setup.md](../docs/images-setup.md) pour le détail.
+See [docs/images-setup.md](../docs/images-setup.md) for details.
 
-## Tools utilisés
+## Tools used
 
-- **Aucun MCP** — cette commande n'utilise pas Mentionable
-- Script local : `scripts/generate-image.mjs` (wrapper sur `@google/genai`)
-- Modèle : `gemini-2.5-flash-image` (alias "nano banana")
+- **No MCP** — this command doesn't use Mentionable
+- Local script: `scripts/generate-image.mjs` (wrapper around `@google/genai`)
+- Model: `gemini-2.5-flash-image` (aka "nano banana")
 
-## Convention de structure
+## Structure convention
 
-Chaque article vit dans son dossier sous `articles/` :
+Each article lives in its own folder under `articles/`:
 
 ```
 articles/cnv-au-travail/
-├── index.md           ← contenu de l'article
-└── images/            ← images générées
+├── index.md           ← article content
+└── images/            ← generated images
     ├── 1-cover.png
     └── ...
 ```
 
-Dans le markdown, référence les images en relatif : `![alt](images/1-cover.png)`.
+In the markdown, reference images relatively: `![alt](images/1-cover.png)`.
 
-## Sur Claude Code
+## In Claude Code
 
 ```
 /mentionable-images articles/cnv-au-travail
@@ -66,62 +66,62 @@ Dans le markdown, référence les images en relatif : `![alt](images/1-cover.png
 ```
 
 ```
-/mentionable-images           # utilise l'article du chat en cours
+/mentionable-images           # uses the article from the current chat
 ```
 
 ```
-/mentionable-images "La CNV au travail"   # cherche un article matchant
+/mentionable-images "La CNV au travail"   # searches for a matching article
 ```
 
-Claude te demande :
-1. **Combien d'images ?** (1, 2, 3, 4+)
-2. **Quel style ?** (photo / illustration / 3D / sketch)
-3. **Quels types ?** (cover / social / illustration / diagram, multi-select)
+Claude asks you:
+1. **How many images?** (1, 2, 3, 4+)
+2. **Which style?** (photo / illustration / 3D / sketch)
+3. **Which types?** (cover / social / illustration / diagram, multi-select)
 
-Puis il construit les prompts visuels (en anglais, palette cohérente), lance le script en parallèle, et écrit les fichiers dans `articles/<slug>/images/`.
+Then it builds the visual prompts (in English, consistent palette), runs the script in parallel, and writes the files to `articles/<slug>/images/`.
 
-## Sur Cursor / Claude Desktop / autre client
+## In Cursor / Claude Desktop / another client
 
-Si tu n'as pas Claude Code, copie-colle ce prompt dans ton client :
+If you don't have Claude Code, copy-paste this prompt into your client:
 
 ```text
-Tu es un directeur artistique éditorial. À partir de l'article suivant, génère N images d'illustration via le script `scripts/generate-image.mjs`.
+You are an editorial art director. From the following article, generate N illustration images via the `scripts/generate-image.mjs` script.
 
-Article : <colle ici le contenu ou le chemin .md>
-Nombre d'images : <N>
-Types : <cover | social | illustration | diagram, liste>
+Article: <paste the content or the .md path here>
+Number of images: <N>
+Types: <cover | social | illustration | diagram, list>
 
-Étapes :
-1. Synthétise : titre, intent, 3-5 idées visuelles clés, tone, slug en kebab-case (max 40 char)
-2. Pour chaque image, construis un prompt en anglais :
-   - Sujet concret (objet, scène, métaphore)
-   - Style : editorial flat illustration, minimal, professional, muted palette with one accent color
-   - Ratio : 16:9 cover / 1:1 social / 4:3 illustration
-   - Palette commune à toutes les images du run
-   - Contraintes : pas de texte, pas de logo, pas d'UI
-3. Pour chaque prompt, exécute en parallèle :
+Steps:
+1. Summarize: title, intent, 3-5 key visual ideas, tone, kebab-case slug (max 40 chars)
+2. For each image, build an English prompt:
+   - Concrete subject (object, scene, metaphor)
+   - Style: editorial flat illustration, minimal, professional, muted palette with one accent color
+   - Ratio: 16:9 cover / 1:1 social / 4:3 illustration
+   - Palette shared across all images in the run
+   - Constraints: no text, no logo, no UI
+3. For each prompt, run in parallel:
    npm run generate:image -- --prompt "<prompt>" --out "articles/<slug>/images/<n>-<type>.png" --aspect-ratio <16:9|1:1|4:3>
-4. Écris articles/<slug>/images/prompts.json avec [{ file, type, section, prompt }]
-5. Rends un récap (titre, dossier, liste des fichiers générés)
+4. Write articles/<slug>/images/prompts.json with [{ file, type, section, prompt }]
+5. Produce a recap (title, folder, list of generated files)
 
-Règles : prompts en anglais, palette cohérente, jamais de texte dans l'image, ne ré-invente pas le contenu de l'article.
+Rules: prompts in English, consistent palette, never any text in the image, don't reinvent the article's content.
 ```
 
-## Exemple de livrable
+## Sample deliverable
 
-Pour l'article `articles/cnv-au-travail/index.md` avec 3 images (1 cover + 2 illustrations) :
+For the article `articles/cnv-au-travail/index.md` with 3 images (1 cover + 2 illustrations):
 
 ```
 articles/cnv-au-travail/
 ├── index.md
 └── images/
-    ├── 1-cover.png          # Cover 16:9 — deux collègues en dialogue apaisé
-    ├── 2-illustration.png   # Section "désaccord avec un manager"
-    ├── 3-illustration.png   # Section "poser ses limites"
-    └── prompts.json         # Réutilisable pour itérer
+    ├── 1-cover.png          # Cover 16:9 — two colleagues in calm dialogue
+    ├── 2-illustration.png   # "Disagreement with a manager" section
+    ├── 3-illustration.png   # "Setting your boundaries" section
+    └── prompts.json         # Reusable for iterating
 ```
 
-Extrait de `prompts.json` :
+Excerpt from `prompts.json`:
 
 ```json
 [
@@ -140,9 +140,9 @@ Extrait de `prompts.json` :
 ]
 ```
 
-## Utilisation CLI (sans Claude)
+## CLI usage (without Claude)
 
-Le script est utilisable seul, sans passer par une commande slash :
+The script can be used standalone, without going through a slash command:
 
 ```bash
 npm run generate:image -- \
@@ -151,38 +151,38 @@ npm run generate:image -- \
   --aspect-ratio 16:9
 ```
 
-Args :
-- `--prompt` (requis) — description en anglais
-- `--out` (requis) — chemin de sortie `.png`
-- `--aspect-ratio` (optionnel) — défaut `16:9`. Valeurs : `1:1`, `16:9`, `9:16`, `4:3`, `3:4`, `3:2`, `2:3`, `21:9`, `5:4`, `4:5`
-- `--model` (optionnel) — défaut `gemini-2.5-flash-image`
+Args:
+- `--prompt` (required) — description in English
+- `--out` (required) — output `.png` path
+- `--aspect-ratio` (optional) — default `16:9`. Values: `1:1`, `16:9`, `9:16`, `4:3`, `3:4`, `3:2`, `2:3`, `21:9`, `5:4`, `4:5`
+- `--model` (optional) — default `gemini-2.5-flash-image`
 
-## Coût
+## Cost
 
-1 image = 1 appel Gemini facturé. Tarifs : https://ai.google.dev/gemini-api/docs/pricing
-Pour 3 images par article, compte quelques centimes.
+1 image = 1 billed Gemini call. Pricing: https://ai.google.dev/gemini-api/docs/pricing
+For 3 images per article, expect a few cents.
 
-## Variantes
+## Variants
 
-- **Style photo réaliste** : remplace "editorial flat illustration" par "professional editorial photography, natural light, shallow depth of field"
-- **Style isométrique** : "isometric illustration, 3/4 perspective, soft shadows, vector style"
-- **Style sketch** : "hand-drawn sketch, ink lines, watercolor accents, journal aesthetic"
-- **Cohérence sur N articles d'une même série** : fige la palette dans le prompt template ("always use palette: #F4EFE6 cream, #8A9A7B sage, #C97B4D terracotta")
-- **Re-générer 1 image seule** : relance `npm run generate:image` avec le prompt depuis `prompts.json` et un autre `--out` (ex. `1-cover-v2.png`) pour itérer sans tout refaire
+- **Realistic photo style**: replace "editorial flat illustration" with "professional editorial photography, natural light, shallow depth of field"
+- **Isometric style**: "isometric illustration, 3/4 perspective, soft shadows, vector style"
+- **Sketch style**: "hand-drawn sketch, ink lines, watercolor accents, journal aesthetic"
+- **Consistency across N articles in a series**: lock the palette in the prompt template ("always use palette: #F4EFE6 cream, #8A9A7B sage, #C97B4D terracotta")
+- **Re-generate a single image**: rerun `npm run generate:image` with the prompt from `prompts.json` and a different `--out` (e.g. `1-cover-v2.png`) to iterate without redoing everything
 
 ## Troubleshooting
 
-| Erreur | Solution |
+| Error | Fix |
 |---|---|
 | `Cannot find module '@google/genai'` | `npm install` |
-| `GEMINI_API_KEY manquante` | Crée `.env` depuis `.env.example` et renseigne ta clé |
-| `429 free_tier_requests, limit: 0` | Active le billing — voir [docs/gemini-api-key.md](../docs/gemini-api-key.md) |
-| Image avec du texte illisible | Reformule le prompt : ajoute "absolutely no text, no logos, no watermarks, no UI" |
-| Style incohérent entre 2 images | Fige la palette HEX dans le template de prompt |
+| `GEMINI_API_KEY manquante` | Create `.env` from `.env.example` and fill in your key |
+| `429 free_tier_requests, limit: 0` | Enable billing — see [docs/gemini-api-key.md](../docs/gemini-api-key.md) |
+| Image with illegible text | Rephrase the prompt: add "absolutely no text, no logos, no watermarks, no UI" |
+| Inconsistent style between 2 images | Lock the HEX palette in the prompt template |
 
-## Aller plus loin
+## Going further
 
-- [Brief d'article complet](05-brief-article.md) — produit le brief en amont
-- [Content gap](04-fan-outs-pour-briefs-articles.md) — choisis le prochain sujet
-- [docs/gemini-api-key.md](../docs/gemini-api-key.md) — créer une clé Gemini avec billing
-- [docs/images-setup.md](../docs/images-setup.md) — setup technique détaillé
+- [Full article brief](05-brief-article.md) — produces the brief upstream
+- [Content gap](04-fan-outs-pour-briefs-articles.md) — choose the next topic
+- [docs/gemini-api-key.md](../docs/gemini-api-key.md) — create a Gemini key with billing
+- [docs/images-setup.md](../docs/images-setup.md) — detailed technical setup
